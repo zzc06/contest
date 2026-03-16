@@ -3,11 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>平安招財米</title>
+<title>量子可逆電路教學平台</title>
 <style>
-    /* ==========================================
-       全域共用設定
-       ========================================== */
     * { box-sizing: border-box; }
     body {
         font-family: "標楷體", sans-serif;
@@ -86,9 +83,6 @@
     .hypercube-box { border: 2px solid #000; background: #fff; border-radius: 6px; width: 430px; height: 430px; position: relative; margin-top: 10px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
     .hypercube-group { position: relative; }
 
-    /* ==========================================
-       平滑動畫過渡設定 (Transitions)
-       ========================================== */
     #circuit-svg-2bit line, #circuit-svg-3bit line { transition: stroke 0.5s ease-in-out; }
     #gate-box-2bit, #gate-box-3bit { transition: x 0.5s ease-in-out, stroke 0.5s ease; }
 
@@ -103,20 +97,18 @@
     .floating-fish-2bit { width: 68px; margin-top: -10px; } 
     .floating-fish-3bit { width: 45px; margin-top: -10px; } 
 
-    /* ==========================================
-       動態分離節點樣式
-       ========================================== */
+    /* 動態分離節點樣式*/
     .node { position: absolute; border: 3px solid #000; border-radius: 50%; background: #fff; display: flex; flex-direction: column; overflow: hidden; z-index: 2; transform: translate(-50%, -50%); box-shadow: 2px 2px 5px rgba(0,0,0,0.2);}
     .node-img-wrapper { position: relative; border-bottom: 2px solid #000; background-color: #fff; display: flex; justify-content: center;}
     .node-label { display: flex; align-items: center; justify-content: center; font-weight: bold; background: #fff; }
 
-    /* 2-bit 專屬樣式 */
+    /* 2-bit 樣式 */
     .node-2bit { width: 90px; height: 90px; }
     .node-2bit .node-img-wrapper { height: 72%; }
     .node-2bit .node-label { height: 28%; font-size: 15px; }
     .node-2bit .cat-img { width: 89%; bottom: -13px; position: absolute; left: 48%; transform: translateX(-50%); }
 
-    /* 3-bit 專屬樣式 */
+    /* 3-bit 樣式 */
     .node-3bit { width: 70px; height: 70px; }
     .node-3bit .node-img-wrapper { height: 65%; }
     .node-3bit .node-label { height: 35%; font-size: 12px; }
@@ -128,7 +120,7 @@
 
 <div id="page-settings">
     <div class="settings-container">
-        <div class="settings-header"><span>⚛️</span> 平安招財米</div>
+        <div class="settings-header"><span>⚛️</span> 量子可逆電路教學平台</div>
         <div class="settings-content">
             <div class="bit-settings">
                 Bit數: <input type="number" id="bit-input" value="3" min="1" max="5" style="width: 60px;" oninput="updateSettingsTable()"> -bit
@@ -270,11 +262,8 @@
 </div>
 
 <script>
-    // ==========================================
-    // 全域變數：圖片網址對照表
-    // 這裡定義了所有的魚和貓咪圖片對應的二進位字串 (例如 '00', '101')
-    // ==========================================
-    const fishUrls = {
+    // 定義所有的魚和貓咪圖片對應的二進位字串 
+        const fishUrls = {
         '000': "https://raw.githubusercontent.com/s112321005/little_prince/main/3flowerFish.png",
         '001': "https://raw.githubusercontent.com/s112321005/little_prince/main/BobFish.png",
         '010': "https://raw.githubusercontent.com/s112321005/little_prince/main/KuroFish.png",
@@ -301,10 +290,9 @@
         '111': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/White_111.png"
     };
 
-    // ==========================================
     // 全域變數：幾何座標對照表 (決定畫面上每個點的位置)
     // t 代表 Top (距離上方多遠)，l 代表 Left (距離左邊多遠)
-    // ==========================================
+    
     const nodeCoords2Bit = {
         '00': { t: 0, l: 0 }, 
         '01': { t: 0, l: 270 },
@@ -323,14 +311,12 @@
     const COLOR_0 = '#FDE6A6'; // 代表數值 0 時的亮黃色
     const COLOR_1 = '#FFB74D'; // 代表數值 1 時的橘黃色
 
-    // 小工具：用來根據數值(例如 '01')，回傳對應魚的圖片網址
+    // 小工具：用來根據數值，回傳對應魚的圖片網址
     function getFishUrl(outputValue) { 
         return fishUrls[outputValue] || ''; 
     }
 
-    // ==========================================
     // 遊戲狀態與記錄變數
-    // ==========================================
     let currentStep = 0;           // 紀錄動畫播到第幾步
     let isPlaying = false;         // 紀錄是否正在播放動畫中
     let currentInput = '00';       // 紀錄目前使用者點擊的是哪一組輸入
@@ -338,9 +324,7 @@
     let globalCustomMap = {};      // 儲存使用者設定好的 Input 對應 Output 的結果
 
 
-    // ==========================================
     // 功能：當使用者改變 Bit 數字時，自動更新真值表的格子
-    // ==========================================
     function updateSettingsTable() {
         // 取得使用者輸入的數字
         let bitInput = document.getElementById('bit-input');
@@ -390,9 +374,9 @@
     updateSettingsTable();
 
 
-    // ==========================================
+    
     // 功能：當使用者按下「繳交並跳轉」時
-    // ==========================================
+    
     function submitAndJump() {
         let bits = parseInt(document.getElementById('bit-input').value);
         
@@ -420,9 +404,6 @@
             orderedData.push({ inVal: inVal, outVal: outVal });
         });
 
-        // 把收集到的輸出值丟進 Set 裡面。
-        // Set 是一種特別的百寶袋，相同的東西只會放進去一次。
-        // 所以如果 Set 裡面的東西數量不等於總行數，代表一定有重複！
         let uniqueVals = new Set(inputValues);
         
         if (lengthValid === false || uniqueVals.size !== Math.pow(2, bits)) {
@@ -441,18 +422,18 @@
         renderVisualizer(bits, customMap, orderedData);
     }
 
-    // ==========================================
+    
     // 功能：返回按鈕
-    // ==========================================
+    
     function backToSettings() {
         // 隱藏第二頁，顯示第一頁
         document.getElementById('page-visualizer').style.display = 'none';
         document.getElementById('page-settings').style.display = 'flex'; 
     }
 
-    // ==========================================
+    
     // 功能：準備視覺化平台的畫面 (右側貓咪與左側按鈕)
-    // ==========================================
+    
     function renderVisualizer(bits, customMap, orderedData) {
         // 1. 把資料畫進左邊的觀測真值表
         let tbody = document.getElementById('vis-truth-table-body');
@@ -465,7 +446,7 @@
         });
         tbody.innerHTML = html;
 
-        // 2. 判斷這是不是我們內建好動畫的「特殊題型」
+        // 判斷這是不是內建好動畫的「特殊題型」
         let isQ1 = false;
         let isQ3BitNot = false;
         
@@ -485,7 +466,7 @@
         
         document.getElementById('question-select').value = currentQuestion;
 
-        // 3. 根據題型，決定要顯示哪一張電路圖
+        // 根據題型，決定要顯示哪一張電路圖
         document.getElementById('circuit-svg-2bit').style.display = isQ1 ? 'block' : 'none';
         document.getElementById('circuit-svg-3bit').style.display = isQ3BitNot ? 'block' : 'none';
         
@@ -497,7 +478,7 @@
         document.getElementById('btn-next').disabled = true;
         document.getElementById('btn-prev').disabled = true;
 
-        // 4. 開始畫右邊的「幾何圖與貓咪魚群」
+        // 開始畫右邊的「幾何圖與貓咪魚群」
         let cubeGroup = document.getElementById('dynamic-hypercube');
         cubeGroup.innerHTML = ''; // 先清空畫布
 
@@ -596,7 +577,7 @@
             });
             
         } else {
-            // 如果不是 2 或 3 bit (例如 4 bit 以上)，我們就不畫圖形了，改畫一排簡單的圓形標籤
+            // 如果不是 2 或 3 bit (例如 4 bit 以上)，就不畫圖形了
             cubeGroup.style.width = '100%'; 
             cubeGroup.style.height = '100%';
             
@@ -621,10 +602,7 @@
         bindTruthTableEvents(); 
     }
 
-
-    // ==========================================
     // 電路畫面上色小幫手
-    // ==========================================
     // 這個函數用來改變電線的顏色 (0 是亮黃，1 是橘黃)
     function colorWire(lineId, value) { 
         let element = document.getElementById(lineId); 
@@ -644,9 +622,9 @@
     }
 
 
-    // ==========================================
+   
     // 功能：當使用者點擊左側真值表的某一列時
-    // ==========================================
+    
     function bindTruthTableEvents() {
         const rows = document.querySelectorAll('.truth-row');
         
@@ -676,10 +654,10 @@
         });
     }
 
-    // ==========================================
+    
     // 動畫核心邏輯：2-Bit 電路動畫
     // 這個函數會根據 `currentStep` 的數值，決定畫面上要顯示什麼
-    // ==========================================
+    
     function updateAnimation2Bit() {
         resetWires(); // 先把所有線變黑
         
@@ -773,10 +751,10 @@
         });
     }
 
-    // ==========================================
+   
     // 動畫核心邏輯：3-Bit 電路動畫
     // 邏輯跟 2-Bit 很像，只是變成了三條線、更多步驟
-    // ==========================================
+    
     function updateAnimation3Bit() {
         resetWires();
         let redBox = document.getElementById('gate-box-3bit');
@@ -870,9 +848,9 @@
         });
     }
 
-    // ==========================================
+    
     // 3-Bit 專用小幫手：負責交換立體方塊上的魚
-    // ==========================================
+    
     function swapFishes(bitIndex, fishState) {
         // 這是一種二進位的魔法 (位元運算)
         // 如果 bitIndex 是 0，mask 就是 4 ('100')
@@ -896,9 +874,8 @@
         }
     }
 
-    // ==========================================
     // 綁定三個控制按鈕 (下一步、上一步、重置)
-    // ==========================================
+    
     document.getElementById('btn-next').addEventListener('click', () => { 
         if (!isPlaying) return; // 沒在播動畫就不理他
         
