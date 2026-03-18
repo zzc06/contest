@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Reversible Circuit Educational Platform</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: "Times New Roman", sans-serif;
+        background-color: #F8F3DC; 
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden; 
+    }
+    .btn {
+        background-color: #ddd;
+        border: 1px solid #000;
+        border-radius: 20px;
+        padding: 6px 18px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: bold;
+        transition: 0.2s;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .btn:hover { background-color: #ccc; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+    /* ==========================================
+       頁面 1：設定頁 (滿版設定頁)
+       ========================================== */
+    #page-settings { display: flex; flex-direction: column; height: 100vh; width: 100vw; background-color: #F8F3DC; }
+    .settings-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
+    .settings-header { background-color: #E6B981; padding: 15px 3vw; font-weight: bold; font-size: 26px; display: flex; align-items: center; gap: 10px; }
+    .settings-content { padding: 40px 5vw; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .bit-settings { margin-bottom: 20px; font-size: 18px; font-weight: bold; }
+    .bit-settings input { font-size: 16px; padding: 4px; border-radius: 5px; border: 2px solid #000; text-align: center; }
+    
+    .main-layout { display: flex; gap: 50px; flex: 1; min-height: 0; align-items: flex-start; }
+    .truth-table-section { flex: 1; max-height: 100%; overflow-y: auto; border: 2px solid #000; background-color: #fff; border-radius: 6px; }
+    .settings-table { width: 100%; border-collapse: collapse; text-align: center; }
+    .settings-table th { background-color: #D0A370; padding: 12px; border-bottom: 2px solid #000; border-right: 1px solid #000; border-top: 2px solid #D0A370;position: sticky; top: 0; z-index: 1; font-size: 18px; }
+    .settings-table th:first-child {border-left: 2px solid #D0A370; /* 專門填補左側縫隙 */}
+    .settings-table td { padding: 10px; border: 1px solid #ccc; font-size: 16px; font-weight: bold; }
+    .settings-table td input { width: 80%; text-align: center; border: 2px solid #ccc; font-size: 16px; border-radius: 4px; padding: 4px; font-weight: bold; transition: 0.2s; }
+    .settings-table td input:focus { border-color: #D33F31; outline: none; }
+
+    .parameter-section { flex: 1; font-size: 16px; background: #fff; border: 2px solid #000; border-radius: 6px; padding: 30px; height: fit-content; }
+    .parameter-section h3 { margin-top: 0; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+    .param-row { margin-bottom: 15px; display: flex; align-items: center; }
+    .param-row label { width: 60px; font-weight: bold;}
+    .param-row select, .param-row input { padding: 6px; border: 2px solid #ccc; border-radius: 5px; text-align: center; font-size: 15px; }
+    .submit-btn { background-color: #D33F31; color: white; border: 2px solid #A32A20; padding: 10px 25px; font-size: 18px; }
+    .submit-btn:hover { background-color: #B23428; }
+
+    /* ==========================================
+       頁面 2：視覺化平台
+       ========================================== */
+    #page-visualizer { display: none; height: 100vh; flex-direction: column; background-color: #F8F3DC; }
+    .vis-header { background-color: #E6B981; padding: 15px 3vw; display: flex; align-items: center; gap: 15px; }
+    .vis-header-icon { background: #fff; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 2px solid #000; }
+    .vis-header-title { font-size: 26px; font-weight: bold; color: #000; margin: 0; }
+    
+    .content-wrapper { display: flex; padding: 40px 5vw; gap: 50px; flex: 1; justify-content: center; overflow: auto; }
+    .left-panel { flex: 1; max-width: 500px; display: flex; flex-direction: column;}
+    .section-title { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .circuit-container { display: flex; align-items: center; gap: 15px; margin-bottom: 30px;}
+    .circuit-box { border: 2px solid #000; background: #fff; border-radius: 6px; padding: 15px; min-height: 100px; flex: 1; display: flex; justify-content: center; align-items: center;}
+    .circuit-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+    .vis-truth-table-container { flex: 0 1 auto; max-height: 100%; overflow-y: auto; border: 2px solid #000; background: #fff; border-radius: 6px; }
+    .vis-truth-table { margin-top: 0; border: none; width: 100%; border-collapse: collapse; text-align: center; }
+    .vis-truth-table th { background-color: #D0A370; border-bottom: 2px solid #000; border-right: 1px solid #000; padding: 12px; font-size: 18px; position: sticky; top: 0; z-index: 1; }
+    .vis-truth-table td { border: 1px solid #ccc; padding: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .vis-truth-table tr:hover td { background-color: #fcf4e8; }
+    .vis-truth-table tr.selected td { background-color: #F3CA83; border-color: #000;}
+
+    .right-panel { flex: 1.2; max-width: 500px; position: relative; display: flex; flex-direction: column; align-items: center;}
+   
+    .hypercube-box { border: 2px solid #000; background: #fff; border-radius: 6px; width: 430px; height: 430px; position: relative; margin-top: 45px; margin-left: 50px;display: flex; justify-content: center; align-items: center; overflow: hidden; }
+    .hypercube-group { position: relative; }
+
+    #circuit-svg-2bit line, #circuit-svg-3bit line { transition: stroke 0.5s ease-in-out; }
+    #gate-box-2bit, #gate-box-3bit { transition: x 0.5s ease-in-out, stroke 0.5s ease; }
+
+    /* 獨立魚群圖層的平滑移動設定 */
+    .floating-fish {
+        position: absolute;
+        z-index: 5;
+        transform: translate(-50%, -50%); /* 對齊中心 */
+        transition: top 0.6s ease-in-out, left 0.6s ease-in-out; /* 動畫平滑度 */
+        pointer-events: none; /* 避免擋住滑鼠點擊 */
+    }
+    .floating-fish-2bit { width: 68px; margin-top: -10px; } 
+    .floating-fish-3bit { width: 45px; margin-top: -10px; } 
+
+    /* 動態分離節點樣式*/
+    .node { position: absolute; border: 3px solid #000; border-radius: 50%; background: #fff; display: flex; flex-direction: column; overflow: hidden; z-index: 2; transform: translate(-50%, -50%); box-shadow: 2px 2px 5px rgba(0,0,0,0.2);}
+    .node-img-wrapper { position: relative; border-bottom: 2px solid #000; background-color: #fff; display: flex; justify-content: center;}
+    .node-label { display: flex; align-items: center; justify-content: center; font-weight: bold; background: #fff; }
+
+    /* 2-bit 樣式 */
+    .node-2bit { width: 90px; height: 90px; }
+    .node-2bit .node-img-wrapper { height: 72%; }
+    .node-2bit .node-label { height: 28%; font-size: 15px; }
+    .node-2bit .cat-img { width: 89%; bottom: -13px; position: absolute; left: 48%; transform: translateX(-50%); }
+
+    /* 3-bit 樣式 */
+    .node-3bit { width: 70px; height: 70px; }
+    .node-3bit .node-img-wrapper { height: 65%; }
+    .node-3bit .node-label { height: 35%; font-size: 12px; }
+    
+    .back-btn { position: absolute; bottom: -50px; right: 10px; background-color: #E2C8A0;}
+</style>
+</head>
+<body>
+
+<div id="page-settings">
+    <div class="settings-container">
+        <div class="settings-header"><span>⚛️</span> Quantum Reversible Circuit Educational Platform</div>
+        <div class="settings-content">
+            <div class="bit-settings">
+                Bit Count: <input type="number" id="bit-input" value="3" min="2" max="5" style="width: 60px;" oninput="updateSettingsTable()"> -bit
+                
+            </div>
+            
+            <div class="main-layout">
+                <div class="truth-table-section">
+                    <table class="settings-table">
+                        <thead><tr><th>Input</th><th>Output (User-defined)</th></tr></thead>
+                        <tbody id="truth-table-body">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="parameter-section">
+                    <h3>⚙️ Parameter Settings</h3>
+                    <div class="param-row"><label>Guide:</label><select><option>GBest</option><option>LBest</option></select> <span style="margin: 0 5px;">X</span> <select><option>GWorst</option><option>LWorst</option></select></div>
+                    <div class="param-row"><label>Depth:</label><input type="number" value="3" style="width: 60px;"></div>
+                    <div class="param-row"><label>Theta:</label><input type="text" value="0.001" style="width: 80px;"></div>
+                    <div style="text-align: right; margin-top: 30px; border-top: 2px dashed #eee; padding-top: 20px;">
+                        <button class="btn submit-btn" onclick="submitAndJump()">Submit ➡</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="page-visualizer">
+    <div class="vis-header">
+        <div class="vis-header-title" style="display:flex; align-items:center; gap:10px;">
+            <span>⚛️</span> Quantum Reversible Circuit Educational Platform
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="left-panel">
+            <div class="section-title">
+                <span>💡</span>Circuit Comprehension:
+            </div>
+            
+            <div class="circuit-container">
+                <div class="circuit-box" id="circuit-box">
+                    
+                    <svg id="circuit-svg-2bit" width="300" height="120" style="display:none;">
+                        <text id="label-in-a" x="5" y="46" font-size="20" font-weight="bold">0</text>
+                        <text id="label-in-b" x="5" y="96" font-size="20" font-weight="bold">0</text>
+                        <text id="label-out-a" x="280" y="46" font-size="20" font-weight="bold">0</text>
+                        <text id="label-out-b" x="280" y="96" font-size="20" font-weight="bold">1</text>
+                        <line id="w2-a1" x1="25" y1="40" x2="80" y2="40" stroke="black" stroke-width="5"/>
+                        <line id="w2-a2" x1="80" y1="40" x2="160" y2="40" stroke="black" stroke-width="5"/>
+                        <line id="w2-a3" x1="160" y1="40" x2="270" y2="40" stroke="black" stroke-width="5"/>
+                        <line id="w2-b1" x1="25" y1="90" x2="80" y2="90" stroke="black" stroke-width="5"/>
+                        <line id="w2-b2" x1="80" y1="90" x2="160" y2="90" stroke="black" stroke-width="5"/>
+                        <line id="w2-b3" x1="160" y1="90" x2="270" y2="90" stroke="black" stroke-width="5"/>
+                        <line id="gate-1-v" x1="80" y1="40" x2="80" y2="90" stroke="black" stroke-width="5"/>
+                        <circle cx="80" cy="40" r="8" fill="black"/>
+                        <circle cx="80" cy="90" r="14" fill="white" stroke="black" stroke-width="4"/>
+                        <line x1="80" y1="76" x2="80" y2="104" stroke="black" stroke-width="4"/>
+                        <line x1="66" y1="90" x2="94" y2="90" stroke="black" stroke-width="4"/>
+                        <line id="gate-2-v" x1="160" y1="40" x2="160" y2="90" stroke="black" stroke-width="5"/>
+                        <circle cx="160" cy="40" r="8" fill="white" stroke="black" stroke-width="4"/>
+                        <circle cx="160" cy="90" r="14" fill="white" stroke="black" stroke-width="4"/>
+                        <line x1="160" y1="76" x2="160" y2="104" stroke="black" stroke-width="4"/>
+                        <line x1="146" y1="90" x2="174" y2="90" stroke="black" stroke-width="4"/>
+                        <rect id="gate-box-2bit" x="65" y="30" width="30" height="90" rx="8" fill="none" stroke="#D33F31" stroke-width="5" style="display:none;"/>
+                    </svg>
+
+                    <svg id="circuit-svg-3bit" width="300" height="150" style="display:none;">
+                        <text id="label3-in-a" x="5" y="36" font-size="20" font-weight="bold">0</text>
+                        <text id="label3-in-b" x="5" y="86" font-size="20" font-weight="bold">1</text>
+                        <text id="label3-in-c" x="5" y="136" font-size="20" font-weight="bold">0</text>
+                        <text id="label3-out-a" x="280" y="36" font-size="20" font-weight="bold">1</text>
+                        <text id="label3-out-b" x="280" y="86" font-size="20" font-weight="bold">0</text>
+                        <text id="label3-out-c" x="280" y="136" font-size="20" font-weight="bold">1</text>
+                        <line id="w3-a1" x1="25" y1="30" x2="80" y2="30" stroke="black" stroke-width="5"/>
+                        <line id="w3-a2" x1="80" y1="30" x2="150" y2="30" stroke="black" stroke-width="5"/>
+                        <line id="w3-a3" x1="150" y1="30" x2="220" y2="30" stroke="black" stroke-width="5"/>
+                        <line id="w3-a4" x1="220" y1="30" x2="270" y2="30" stroke="black" stroke-width="5"/>
+                        <line id="w3-b1" x1="25" y1="80" x2="80" y2="80" stroke="black" stroke-width="5"/>
+                        <line id="w3-b2" x1="80" y1="80" x2="150" y2="80" stroke="black" stroke-width="5"/>
+                        <line id="w3-b3" x1="150" y1="80" x2="220" y2="80" stroke="black" stroke-width="5"/>
+                        <line id="w3-b4" x1="220" y1="80" x2="270" y2="80" stroke="black" stroke-width="5"/>
+                        <line id="w3-c1" x1="25" y1="130" x2="80" y2="130" stroke="black" stroke-width="5"/>
+                        <line id="w3-c2" x1="80" y1="130" x2="150" y2="130" stroke="black" stroke-width="5"/>
+                        <line id="w3-c3" x1="150" y1="130" x2="220" y2="130" stroke="black" stroke-width="5"/>
+                        <line id="w3-c4" x1="220" y1="130" x2="270" y2="130" stroke="black" stroke-width="5"/>
+                        <circle cx="80" cy="30" r="14" fill="none" stroke="black" stroke-width="4"/>
+                        <line x1="80" y1="16" x2="80" y2="44" stroke="black" stroke-width="4"/>
+                        <line x1="66" y1="30" x2="94" y2="30" stroke="black" stroke-width="4"/>
+                        <circle cx="150" cy="80" r="14" fill="none" stroke="black" stroke-width="4"/>
+                        <line x1="150" y1="66" x2="150" y2="94" stroke="black" stroke-width="4"/>
+                        <line x1="136" y1="80" x2="164" y2="80" stroke="black" stroke-width="4"/>
+                        <circle cx="220" cy="130" r="14" fill="none" stroke="black" stroke-width="4"/>
+                        <line x1="220" y1="116" x2="220" y2="144" stroke="black" stroke-width="4"/>
+                        <line x1="206" y1="130" x2="234" y2="130" stroke="black" stroke-width="4"/>
+                        <rect id="gate-box-3bit" x="65" y="10" width="30" height="140" rx="8" fill="none" stroke="#D33F31" stroke-width="6" style="display:none;"/>
+                    </svg>
+
+                    <div id="no-circuit-msg" style="text-align:center; padding-top: 30px; font-weight:bold; color:#666;">
+                        此自訂真值表的最短電路尚未設定
+                    </div>
+                </div>
+                
+                <div class="circuit-buttons">
+                    <button id="btn-prev" class="btn" disabled>Previous Step</button>
+                    <button id="btn-next" class="btn" disabled>Next Step</button>
+                    <button id="btn-reset-circuit" class="btn" style="background:#eee;" disabled>Reset</button>
+                </div>
+            </div>
+
+            <div class="vis-truth-table-container">
+                <table class="vis-truth-table">
+                    <thead><tr><th>Input</th><th>Output</th></tr></thead>
+                    <tbody id="vis-truth-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            
+            
+            <div class="hypercube-box">
+                <div class="hypercube-group" id="dynamic-hypercube"></div>
+            </div>
+
+            <button class="btn back-btn" onclick="backToSettings()">⬅ Back to Setting</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 定義所有的魚和貓咪圖片對應的二進位字串 
+        const fishUrls = {
+        '000': "https://raw.githubusercontent.com/s112321005/little_prince/main/3flowerFish.png",
+        '001': "https://raw.githubusercontent.com/s112321005/little_prince/main/BobFish.png",
+        '010': "https://raw.githubusercontent.com/s112321005/little_prince/main/KuroFish.png",
+        '011': "https://raw.githubusercontent.com/s112321005/little_prince/main/dollFish%20.png",
+        '100': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/BlackFish.png",
+        '101': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/BinsFish.png",
+        '110': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/SakabanFish.png",
+        '111': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/WhiteFish.png",
+        // 2-Bit 的魚
+        '00': "https://raw.githubusercontent.com/s112321005/little_prince/main/3flowerFish.png",
+        '01': "https://raw.githubusercontent.com/s112321005/little_prince/main/BobFish.png",
+        '10': "https://raw.githubusercontent.com/s112321005/little_prince/main/KuroFish.png",
+        '11': "https://raw.githubusercontent.com/s112321005/little_prince/main/dollFish%20.png"
+    };
+
+    const catUrls3Bit = {
+        '000': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/3flower_000.png",
+        '001': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/Bob_001.png",
+        '010': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/Kurover_010.png",
+        '011': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/Siam_011.png",
+        '100': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/Black_100.png",
+        '101': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/Bins_101.png",
+        '110': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/Sakaban_110.png",
+        '111': "https://raw.githubusercontent.com/s112321005/little_prince/main/3bit/White_111.png"
+    };
+
+    // 全域變數：幾何座標對照表 (決定畫面上每個點的位置)
+    // t 代表 Top (距離上方多遠)，l 代表 Left (距離左邊多遠)
+    
+    const nodeCoords2Bit = {
+        '00': { t: 0, l: 0 }, 
+        '01': { t: 0, l: 270 },
+        '10': { t: 270, l: 0 }, 
+        '11': { t: 270, l: 270 }
+    };
+
+    const nodeCoords3Bit = {
+        '100': { t: 40, l: 40 },   '101': { t: 40, l: 280 },
+        '000': { t: 110, l: 110 }, '001': { t: 110, l: 210 },
+        '010': { t: 210, l: 110 }, '011': { t: 210, l: 210 },
+        '110': { t: 280, l: 40 },  '111': { t: 280, l: 280 }
+    };
+
+    // 電線通電時的顏色
+    const COLOR_0 = '#FDE6A6'; // 代表數值 0 時的亮黃色
+    const COLOR_1 = '#FFB74D'; // 代表數值 1 時的橘黃色
+
+    // 小工具：用來根據數值，回傳對應魚的圖片網址
+    function getFishUrl(outputValue) { 
+        return fishUrls[outputValue] || ''; 
+    }
+
+    // 遊戲狀態與記錄變數
+    let currentStep = 0;           // 紀錄動畫播到第幾步
+    let isPlaying = false;         // 紀錄是否正在播放動畫中
+    let currentInput = '00';       // 紀錄目前使用者點擊的是哪一組輸入
+    let currentQuestion = 'Custom';// 紀錄目前的題型 (自訂、內建Q1、內建Q3)
+    let globalCustomMap = {};      // 儲存使用者設定好的 Input 對應 Output 的結果
+
+
+    // 功能：當使用者改變 Bit 數字時，自動更新真值表的格子
+    function updateSettingsTable() {
+        // 取得使用者輸入的數字
+        let bitInput = document.getElementById('bit-input');
+        let bits = parseInt(bitInput.value);
+        
+        // 如果輸入不合理，就直接離開這個函數
+        if (isNaN(bits) || bits < 1 || bits > 6) return; 
+
+        let tableHTML = '';
+        
+        // 總共會有多少列？(2 的 bits 次方，例如 2 bit 就是 4 列，3 bit 就是 8 列)
+        let rowCount = Math.pow(2, bits);
+        
+        // 用迴圈一行一行產生真值表的格子
+        for (let i = 0; i < rowCount; i++) {
+            // 把數字轉換成二進位字串，例如數字 1 變成 '001' (如果是 3 bit 的話)
+            let binStr = i.toString(2).padStart(bits, '0');
+            
+            // 決定「預設的輸出值」要是什麼
+            let defaultOut;
+            if (bits === 3) {
+                // 如果是 3 bit，我們預設填入反閘 (NOT gate) 的答案 (0變1，1變0)
+                // 原本寫法是 ~i & 7，這是一點小魔法：把它反轉後確保只保留最後 3 個位元
+                let inverted = ~i & 7;
+                defaultOut = inverted.toString(2).padStart(3, '0');
+            } else if (bits === 2) {
+                // 如果是 2 bit，我們給一組特定的預設答案
+                let map2 = {'00':'01', '01':'00', '10':'11', '11':'10'};
+                defaultOut = map2[binStr];
+            } else {
+                // 其他情況，預設輸出就跟輸入一樣
+                defaultOut = binStr;
+            }
+            
+            // 把這一行組合好，存進 tableHTML 中
+            tableHTML += `<tr>
+                <td>${binStr}</td>
+                <td><input type="text" value="${defaultOut}" maxlength="${bits}"></td>
+            </tr>`;
+        }
+        
+        // 把組合好的 HTML 放進網頁裡
+        document.getElementById('truth-table-body').innerHTML = tableHTML;
+    }
+    
+    // 一開始網頁載入時，先執行一次產生預設表格
+    updateSettingsTable();
+
+
+    
+    // 功能：當使用者按下「繳交並跳轉」時
+    
+    function submitAndJump() {
+        let bits = parseInt(document.getElementById('bit-input').value);
+        
+        // 抓出表格裡面所有的資料列 (tr)
+        const rows = document.getElementById('truth-table-body').querySelectorAll('tr');
+        
+        let customMap = {};      // 用來記錄 輸入->輸出 的配對
+        let inputValues = [];    // 收集所有的輸出值，等等要用來檢查有沒有重複
+        let lengthValid = true;  // 記錄使用者輸入的長度對不對
+        let orderedData = [];    // 有順序的資料，準備傳到下一頁畫表格用
+        
+        // 檢查每一列
+        rows.forEach(row => {
+            // 抓出輸入值 (第一格) 和 輸出值 (第二格裡面的 input)
+            let inVal = row.cells[0].innerText.trim();
+            let outVal = row.cells[1].querySelector('input').value.trim();
+            
+            // 如果輸入長度跟設定的 Bit 不一樣，標記為有錯
+            if (outVal.length !== bits) {
+                lengthValid = false;
+            }
+            
+            customMap[inVal] = outVal;
+            inputValues.push(outVal);
+            orderedData.push({ inVal: inVal, outVal: outVal });
+        });
+
+        let uniqueVals = new Set(inputValues);
+        
+        if (lengthValid === false || uniqueVals.size !== Math.pow(2, bits)) {
+            alert("錯誤：請確保 Output 填寫的內容符合你設定的 Bit 長度，且不能有重複的組合喔！");
+            return; // 終止這個函數，不跳轉
+        }
+
+        // 把設定存進全域變數，供後續使用
+        globalCustomMap = customMap;
+        
+        // 隱藏第一頁，顯示第二頁
+        document.getElementById('page-settings').style.display = 'none';
+        document.getElementById('page-visualizer').style.display = 'flex';
+        
+        // 呼叫準備視覺化畫面的函數
+        renderVisualizer(bits, customMap, orderedData);
+    }
+
+    
+    // 功能：返回按鈕
+    
+    function backToSettings() {
+        // 隱藏第二頁，顯示第一頁
+        document.getElementById('page-visualizer').style.display = 'none';
+        document.getElementById('page-settings').style.display = 'flex'; 
+    }
+
+    
+    // 功能：準備視覺化平台的畫面 (右側貓咪與左側按鈕)
+    
+    function renderVisualizer(bits, customMap, orderedData) {
+        // 1. 把資料畫進左邊的觀測真值表
+        let tbody = document.getElementById('vis-truth-table-body');
+        let html = '';
+        orderedData.forEach(data => {
+            html += `<tr class="truth-row" id="row-${data.inVal}" data-in="${data.inVal}" data-out="${data.outVal}">
+                        <td>${data.inVal}</td>
+                        <td class="out-cell">${data.outVal}</td>
+                     </tr>`;
+        });
+        tbody.innerHTML = html;
+
+        // 判斷這是不是內建好動畫的「特殊題型」
+        let isQ1 = false;
+        let isQ3BitNot = false;
+        
+        // 判斷 2-bit 特殊題
+        if (bits === 2 && customMap['00']==='01' && customMap['01']==='00' && customMap['10']==='11' && customMap['11']==='10') {
+            isQ1 = true;
+        }
+        // 判斷 3-bit 特殊題
+        if (bits === 3 && customMap['000']==='111' && customMap['001']==='110' && customMap['010']==='101') {
+            isQ3BitNot = true;
+        }
+
+        // 紀錄當前題型，並在畫面上顯示
+        if (isQ1) { currentQuestion = 'Q1'; }
+        else if (isQ3BitNot) { currentQuestion = 'Q_3Bit_NOT'; }
+        else { currentQuestion = 'Custom'; }
+        
+       
+
+        // 根據題型，決定要顯示哪一張電路圖
+        document.getElementById('circuit-svg-2bit').style.display = isQ1 ? 'block' : 'none';
+        document.getElementById('circuit-svg-3bit').style.display = isQ3BitNot ? 'block' : 'none';
+        
+        // 如果都不是特殊題，就顯示「無電路提示」
+        document.getElementById('no-circuit-msg').style.display = (isQ1 || isQ3BitNot) ? 'none' : 'block';
+        
+        // 調整按鈕的開關
+        document.getElementById('btn-reset-circuit').disabled = !(isQ1 || isQ3BitNot);
+        document.getElementById('btn-next').disabled = true;
+        document.getElementById('btn-prev').disabled = true;
+
+        // 開始畫右邊的「幾何圖與貓咪魚群」
+        let cubeGroup = document.getElementById('dynamic-hypercube');
+        cubeGroup.innerHTML = ''; // 先清空畫布
+
+        if (bits === 2) {
+            // 如果是 2-bit，畫一個 2D 正方形
+            cubeGroup.style.width = '270px'; 
+            cubeGroup.style.height = '270px';
+            
+            // 畫正方形的線條 (SVG)
+            cubeGroup.innerHTML = `
+                <svg width="100%" height="100%" style="position: absolute; top:0; left:0; z-index: 1;">
+                    <line x1="0" y1="0" x2="270" y2="0" stroke="black" stroke-width="3"/>
+                    <line x1="0" y1="0" x2="0" y2="270" stroke="black" stroke-width="3"/>
+                    <line x1="0" y1="270" x2="270" y2="270" stroke="black" stroke-width="3"/>
+                    <line x1="270" y1="0" x2="270" y2="270" stroke="black" stroke-width="3"/>
+                </svg>`;
+            
+            // 準備 4 隻貓咪的資料
+            const nodes = [
+                { id: '00', c: '3flower_00.png' }, 
+                { id: '01', c: 'Bob_01.png' }, 
+                { id: '10', c: 'Kurover_10.png' }, 
+                { id: '11', c: 'doll_11.png' }
+            ];
+            
+            // 用迴圈把貓咪放上畫面
+            nodes.forEach(n => {
+                let coords = nodeCoords2Bit[n.id]; // 取得座標
+                cubeGroup.innerHTML += `
+                    <div class="node node-2bit" data-id="${n.id}" style="top: ${coords.t}px; left: ${coords.l}px;">
+                        <div class="node-img-wrapper">
+                            <img src="https://raw.githubusercontent.com/s112321005/little_prince/main/${n.c}" class="cat-img">
+                        </div>
+                        <div class="node-label">${n.id}</div>
+                    </div>`;
+            });
+
+            // 用迴圈把「魚群」(代表輸出結果) 疊在對應的貓咪上面
+            Object.keys(nodeCoords2Bit).forEach(nodeId => {
+                let outVal = customMap[nodeId]; // 這個節點應該要放哪一隻魚？
+                let coords = nodeCoords2Bit[nodeId]; // 這個節點的座標在哪？
+                
+                cubeGroup.innerHTML += `
+                    <img id="fish-obj-${outVal}" src="${getFishUrl(outVal)}" class="floating-fish floating-fish-2bit" style="top: ${coords.t}px; left: ${coords.l}px;">`;
+            });
+            
+        } 
+        else if (bits === 3) {
+            // 如果是 3-bit，畫一個 3D 立體方塊 (其實是用 2D 線條畫出立體感)
+            cubeGroup.style.width = '320px'; 
+            cubeGroup.style.height = '320px';
+            
+            // 畫立體方塊的線條 (SVG)
+            cubeGroup.innerHTML = `
+                <svg width="100%" height="100%" style="position: absolute; top:0; left:0; z-index: 1;">
+                    <line x1="40" y1="40" x2="280" y2="40" stroke="black" stroke-width="2"/>
+                    <line x1="280" y1="40" x2="280" y2="280" stroke="black" stroke-width="2"/>
+                    <line x1="280" y1="280" x2="40" y2="280" stroke="black" stroke-width="2"/>
+                    <line x1="40" y1="280" x2="40" y2="40" stroke="black" stroke-width="2"/>
+                    <line x1="110" y1="110" x2="210" y2="110" stroke="black" stroke-width="2"/>
+                    <line x1="210" y1="110" x2="210" y2="210" stroke="black" stroke-width="2"/>
+                    <line x1="210" y1="210" x2="110" y2="210" stroke="black" stroke-width="2"/>
+                    <line x1="110" y1="210" x2="110" y2="110" stroke="black" stroke-width="2"/>
+                    <line x1="40" y1="40" x2="110" y2="110" stroke="black" stroke-width="2"/>
+                    <line x1="280" y1="40" x2="210" y2="110" stroke="black" stroke-width="2"/>
+                    <line x1="40" y1="280" x2="110" y2="210" stroke="black" stroke-width="2"/>
+                    <line x1="280" y1="280" x2="210" y2="210" stroke="black" stroke-width="2"/>
+                </svg>`;
+            
+            // 準備 8 個點的資料
+            const nodes3 = [
+                {id: '100'}, {id: '101'},
+                {id: '000'}, {id: '001'},
+                {id: '010'}, {id: '011'},
+                {id: '110'}, {id: '111'}
+            ];
+            
+            // 把貓咪放上去
+            nodes3.forEach(n => {
+                let coords = nodeCoords3Bit[n.id];
+                cubeGroup.innerHTML += `
+                    <div class="node node-3bit" style="top: ${coords.t}px; left: ${coords.l}px;">
+                        <div class="node-img-wrapper">
+                            <img src="${catUrls3Bit[n.id]}" style="width:85%; bottom:-10px; position:absolute;">
+                        </div>
+                        <div class="node-label">${n.id}</div>
+                    </div>`;
+            });
+
+            // 把魚群放上去
+            Object.keys(nodeCoords3Bit).forEach(nodeId => {
+                let outVal = customMap[nodeId];
+                let coords = nodeCoords3Bit[nodeId];
+                cubeGroup.innerHTML += `
+                    <img id="fish-obj-${outVal}" src="${getFishUrl(outVal)}" class="floating-fish floating-fish-3bit" style="top: ${coords.t}px; left: ${coords.l}px;">`;
+            });
+            
+        } else {
+            // 如果不是 2 或 3 bit (例如 4 bit 以上)，就不畫圖形了
+            cubeGroup.style.width = '100%'; 
+            cubeGroup.style.height = '100%';
+            
+            let genericHTML = `<div style="display:flex; flex-wrap:wrap; gap:15px; justify-content:center; align-items:center; width:100%; height:100%; position:relative; z-index:2; padding:20px; overflow-y:auto;">`;
+            
+            orderedData.forEach(data => { 
+                genericHTML += `
+                    <div style="width: 70px; height: 70px; border: 2px solid #000; border-radius: 50%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);">
+                        <span>${data.inVal}</span>
+                        <span style="color:#D33F31; font-size:13px; margin-top:3px;">➝ ${data.outVal}</span>
+                    </div>`; 
+            });
+            
+            cubeGroup.innerHTML = genericHTML + `</div>`;
+        }
+
+        // 把動畫狀態重設回第一步
+        currentStep = 0; 
+        isPlaying = false;
+        
+        // 綁定左邊真值表的點擊事件，讓它可以在點擊時觸發動畫
+        bindTruthTableEvents(); 
+    }
+
+    // 電路畫面上色小幫手
+    // 這個函數用來改變電線的顏色 (0 是亮黃，1 是橘黃)
+    function colorWire(lineId, value) { 
+        let element = document.getElementById(lineId); 
+        if (element) {
+            element.setAttribute('stroke', value === '0' ? COLOR_0 : COLOR_1); 
+        }
+    }
+    
+    // 這個函數用來把所有電線變回黑色
+    function resetWires() { 
+        document.querySelectorAll('line').forEach(line => { 
+            // 如果 ID 開頭是 w2- 或 w3- 或是 gate-，就把它變回黑色
+            if (line.id.startsWith('w2-') || line.id.startsWith('w3-') || line.id.startsWith('gate-')) {
+                line.setAttribute('stroke', 'black'); 
+            }
+        }); 
+    }
+
+
+   
+    // 功能：當使用者點擊左側真值表的某一列時
+    
+    function bindTruthTableEvents() {
+        const rows = document.querySelectorAll('.truth-row');
+        
+        rows.forEach(row => {
+            row.addEventListener('click', () => {
+                // 先把所有列的黃色背景移除
+                rows.forEach(r => r.classList.remove('selected'));
+                // 把現在點擊的這列加上黃色背景
+                row.classList.add('selected');
+
+                // 如果是特殊題型，才開始播動畫
+                if (currentQuestion === 'Q1' || currentQuestion === 'Q_3Bit_NOT') {
+                    // 記錄現在要測試的輸入值是哪一個 (例如 '01')
+                    currentInput = row.getAttribute('data-in'); 
+                    
+                    isPlaying = true; 
+                    currentStep = 1; // 從第 1 步開始播
+                    
+                    // 呼叫對應的動畫函數
+                    if (currentQuestion === 'Q1') {
+                        updateAnimation2Bit();
+                    } else {
+                        updateAnimation3Bit();
+                    }
+                }
+            });
+        });
+    }
+
+    
+    // 動畫核心邏輯：2-Bit 電路動畫
+    // 這個函數會根據 `currentStep` 的數值，決定畫面上要顯示什麼
+    
+    function updateAnimation2Bit() {
+        resetWires(); // 先把所有線變黑
+        
+        let redBox = document.getElementById('gate-box-2bit'); // 抓出代表目前執行步驟的紅色框框
+        
+        // 判斷上一步/下一步按鈕能不能按
+        document.getElementById('btn-prev').disabled = (currentStep === 0);
+        document.getElementById('btn-next').disabled = (currentStep === 0 || currentStep === 4);
+
+        // 如果步數是 0 (代表重置)
+        if (currentStep === 0) { 
+            redBox.style.display = 'none'; 
+            
+            // 把魚群送回原本出發的貓咪那邊
+            Object.keys(globalCustomMap).forEach(nodeId => {
+                let outVal = globalCustomMap[nodeId];
+                let fishEl = document.getElementById(`fish-obj-${outVal}`);
+                if (fishEl) {
+                    fishEl.style.top = `${nodeCoords2Bit[nodeId].t}px`;
+                    fishEl.style.left = `${nodeCoords2Bit[nodeId].l}px`;
+                }
+            });
+            return; // 結束函數
+        }
+        
+        // 取得目標的答案，準備更新左邊電路圖上的數字
+        let targetOut = globalCustomMap[currentInput];
+        document.getElementById('label-in-a').textContent = currentInput[0]; 
+        document.getElementById('label-in-b').textContent = currentInput[1];
+        document.getElementById('label-out-a').textContent = targetOut[0]; 
+        document.getElementById('label-out-b').textContent = targetOut[1];
+
+        redBox.style.display = 'block'; // 顯示紅色掃描框
+        
+        // 分解輸入的值 (a 是上面那條線，b 是下面那條線)
+        let inputA = currentInput[0];
+        let inputB = currentInput[1];
+        
+        // 模擬量子閘的中間計算結果
+        // 中間的 B = 如果 A 是 1，B 就反轉(0變1, 1變0)；不然 B 就保持原樣
+        let midB = (inputA === '1') ? (inputB === '0' ? '1' : '0') : inputB; 
+        
+        // 最後的 B = 如果 A 是 0，剛才的 midB 就反轉；不然 midB 就保持原樣
+        let outB = (inputA === '0') ? (midB === '0' ? '1' : '0') : midB; 
+
+        // 複製一份當前的魚群狀態，等等要在動畫裡交換他們
+        let fishState = { ...globalCustomMap };
+
+        // 步驟 1：開頭的線路上色
+        if (currentStep >= 1) { 
+            redBox.setAttribute('x', '65'); // 紅框移到左邊
+            colorWire('w2-a1', inputA); 
+            colorWire('w2-b1', inputB); 
+        }
+        
+        // 步驟 2：通過第一個閘，線路上色並交換魚
+        if (currentStep >= 2) { 
+            colorWire('w2-a2', inputA); 
+            colorWire('w2-b2', midB); 
+            
+            // 交換 '10' 和 '11' 位置的魚
+            let temp = fishState['10']; 
+            fishState['10'] = fishState['11']; 
+            fishState['11'] = temp; 
+        }
+        
+        // 步驟 3：紅框移動到右邊的閘
+        if (currentStep >= 3) { 
+            redBox.setAttribute('x', '145'); 
+        }
+        
+        // 步驟 4：通過第二個閘，完成最後上色並交換魚
+        if (currentStep >= 4) { 
+            colorWire('w2-a3', inputA); 
+            colorWire('w2-b3', outB); 
+            
+            // 交換 '00' 和 '01' 位置的魚
+            let temp = fishState['00']; 
+            fishState['00'] = fishState['01']; 
+            fishState['01'] = temp; 
+        }
+
+        // 把剛才算好的新魚群狀態，套用到畫面上產生平滑移動動畫
+        Object.keys(fishState).forEach(nodeId => {
+            let outVal = fishState[nodeId];
+            let fishEl = document.getElementById(`fish-obj-${outVal}`);
+            if (fishEl) {
+                fishEl.style.top = `${nodeCoords2Bit[nodeId].t}px`;
+                fishEl.style.left = `${nodeCoords2Bit[nodeId].l}px`;
+            }
+        });
+    }
+
+   
+    // 動畫核心邏輯：3-Bit 電路動畫
+    // 邏輯跟 2-Bit 很像，只是變成了三條線、更多步驟
+    
+    function updateAnimation3Bit() {
+        resetWires();
+        let redBox = document.getElementById('gate-box-3bit');
+        
+        document.getElementById('btn-prev').disabled = (currentStep === 0);
+        document.getElementById('btn-next').disabled = (currentStep === 0 || currentStep === 6);
+
+        // 如果是步驟 0，全部復原
+        if (currentStep === 0) { 
+            redBox.style.display = 'none'; 
+            Object.keys(globalCustomMap).forEach(nodeId => {
+                let outVal = globalCustomMap[nodeId];
+                let fishEl = document.getElementById(`fish-obj-${outVal}`);
+                if (fishEl) {
+                    fishEl.style.top = `${nodeCoords3Bit[nodeId].t}px`;
+                    fishEl.style.left = `${nodeCoords3Bit[nodeId].l}px`;
+                }
+            });
+            return; 
+        }
+        
+        let targetOut = globalCustomMap[currentInput];
+        
+        // 更新左側的文字標籤
+        document.getElementById('label3-in-a').textContent = currentInput[0]; 
+        document.getElementById('label3-in-b').textContent = currentInput[1]; 
+        document.getElementById('label3-in-c').textContent = currentInput[2];
+        document.getElementById('label3-out-a').textContent = targetOut[0]; 
+        document.getElementById('label3-out-b').textContent = targetOut[1]; 
+        document.getElementById('label3-out-c').textContent = targetOut[2];
+
+        redBox.style.display = 'block';
+        
+        let inputA = currentInput[0], inputB = currentInput[1], inputC = currentInput[2];
+        let valA = inputA, valB = inputB, valC = inputC;
+        let fishState = { ...globalCustomMap };
+        
+        // 步驟 1：初始線段上色
+        if (currentStep >= 1) { 
+            redBox.setAttribute('x', '65'); 
+            colorWire('w3-a1', inputA); 
+            colorWire('w3-b1', inputB); 
+            colorWire('w3-c1', inputC); 
+        }
+        
+        // 步驟 2：第一條線經過反閘 (NOT)，數值反轉
+        if (currentStep >= 2) { 
+            valA = (inputA === '0' ? '1' : '0'); 
+            colorWire('w3-a2', valA); 
+            colorWire('w3-b2', inputB); 
+            colorWire('w3-c2', inputC); 
+            swapFishes(0, fishState); // 呼叫小幫手來交換立體方塊上的魚
+        }
+        
+        // 步驟 3：紅框移動
+        if (currentStep >= 3) { 
+            redBox.setAttribute('x', '135'); 
+        }
+        
+        // 步驟 4：第二條線經過反閘
+        if (currentStep >= 4) { 
+            valB = (inputB === '0' ? '1' : '0'); 
+            colorWire('w3-a3', valA); 
+            colorWire('w3-b3', valB); 
+            colorWire('w3-c3', inputC); 
+            swapFishes(1, fishState); 
+        }
+        
+        // 步驟 5：紅框再移動
+        if (currentStep >= 5) { 
+            redBox.setAttribute('x', '205'); 
+        }
+        
+        // 步驟 6：第三條線經過反閘
+        if (currentStep >= 6) { 
+            valC = (inputC === '0' ? '1' : '0'); 
+            colorWire('w3-a4', valA); 
+            colorWire('w3-b4', valB); 
+            colorWire('w3-c4', valC); 
+            swapFishes(2, fishState); 
+        }
+
+        // 移動魚群到新座標
+        Object.keys(fishState).forEach(nodeId => {
+            let outVal = fishState[nodeId];
+            let fishEl = document.getElementById(`fish-obj-${outVal}`);
+            if (fishEl) {
+                fishEl.style.top = `${nodeCoords3Bit[nodeId].t}px`;
+                fishEl.style.left = `${nodeCoords3Bit[nodeId].l}px`;
+            }
+        });
+    }
+
+    
+    // 3-Bit 專用小幫手：負責交換立體方塊上的魚
+    
+    function swapFishes(bitIndex, fishState) {
+        // 這是一種二進位的魔法 (位元運算)
+        // 如果 bitIndex 是 0，mask 就是 4 ('100')
+        // 如果 bitIndex 是 1，mask 就是 2 ('010')
+        // 如果 bitIndex 是 2，mask 就是 1 ('001')
+        let mask = 1 << (2 - bitIndex);
+        
+        // 掃描全部 8 個可能的狀態 (0 到 7)
+        for(let i = 0; i < 8; i++) {
+            // 如果這個狀態，在這個特定的 bit 上是 0 的話
+            if ((i & mask) === 0) {
+                // 找出對應的兩個狀態字串 (例如 '000' 和 '100')
+                let stateA = i.toString(2).padStart(3, '0');
+                let stateB = (i | mask).toString(2).padStart(3, '0');
+                
+                // 把這兩個狀態上的魚互相交換
+                let temp = fishState[stateA]; 
+                fishState[stateA] = fishState[stateB]; 
+                fishState[stateB] = temp;
+            }
+        }
+    }
+
+    // 綁定三個控制按鈕 (下一步、上一步、重置)
+    
+    document.getElementById('btn-next').addEventListener('click', () => { 
+        if (!isPlaying) return; // 沒在播動畫就不理他
+        
+        if (currentQuestion === 'Q1' && currentStep < 4) { 
+            currentStep++; 
+            updateAnimation2Bit(); 
+        } else if (currentQuestion === 'Q_3Bit_NOT' && currentStep < 6) { 
+            currentStep++; 
+            updateAnimation3Bit(); 
+        }
+    });
+    
+    document.getElementById('btn-prev').addEventListener('click', () => { 
+        if (!isPlaying) return;
+        
+        if (currentQuestion === 'Q1' && currentStep > 1) { 
+            currentStep--; 
+            updateAnimation2Bit(); 
+        } else if (currentQuestion === 'Q_3Bit_NOT' && currentStep > 1) { 
+            currentStep--; 
+            updateAnimation3Bit(); 
+        }
+    });
+    
+    document.getElementById('btn-reset-circuit').addEventListener('click', () => {
+        // 重設步數與狀態
+        currentStep = 0; 
+        isPlaying = false;
+        
+        // 取消表格裡的黃色標記
+        document.querySelectorAll('.truth-row').forEach(row => {
+            row.classList.remove('selected')
+        });
+        
+        // 更新畫面
+        if (currentQuestion === 'Q1') {
+            updateAnimation2Bit();
+        } else if (currentQuestion === 'Q_3Bit_NOT') {
+            updateAnimation3Bit();
+        }
+    });
+</script>
+</body>
+</html>
