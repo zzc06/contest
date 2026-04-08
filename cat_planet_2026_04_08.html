@@ -487,13 +487,14 @@ permList3bit.push([7, 6, 5, 4, 3, 2, 1, 0]);
 
 // 4bit 排列：特別設計
 const permList4bit = [];
-// 第 1 關：強制完全交換 (Cross Swap) - 左邊星球全是右邊的魚，右邊星球全是左邊的魚
+
+// 第 1 關 (Index 0)：強制完全交換 (Cross Swap) 
 permList4bit.push(Array.from({length: 16}, (_, i) => (i + 8) % 16));
-// 第 2 關：隨機
-permList4bit.push(genPerm(16));
-// 第 3 關：完全反轉
-permList4bit.push(Array.from({length: 16}, (_, i) => 15-i));
-// 後續隨機補滿
+
+// 第 2 關 (Index 1)：完全反轉 (原本的第 3 關移到這裡)
+permList4bit.push(Array.from({length: 16}, (_, i) => 15 - i));
+
+// 後續隨機補滿 (原本的隨機邏輯)
 for(let k=0; k<10; k++) permList4bit.push(genPerm(16));
 
 
