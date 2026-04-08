@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cat Planet</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding-top: 20px;
+        padding-bottom: 120px;
+        min-width: 1100px;
+        min-height: 100vh;
+        background: #F8F3DC;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        overflow: auto;
+        transition: all 0.4s ease;
+    }
+
+
+    #gameWrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 950px;
+        position: relative;
+        z-index: 50;
+        margin: 0 auto;
+    }
+   
+    #container {
+        position: relative;
+        width: 420px;
+        height: 420px;
+        overflow: visible;
+        margin: 0 auto;
+        transition: all 0.4s ease;
+    }
+   
+    #bitSelector {
+        width: 100%;
+        padding: 8px 12px;
+        border: 2px solid #ccc;
+        border-radius: 5px;
+        background: white;
+        font-size: 15px;
+        color: #000;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M6 8.5L1.5 4h9L6 8.5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 12px;
+    }
+   
+    #bitSelector:hover {
+        border-color: #000;
+    }
+   
+    #bitSelector:focus {
+        outline: none;
+        border-color: #D33F31;
+    }
+   
+    .planet {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: all 0.4s ease;
+        z-index: 10;
+        background: #fff;
+    }
+   
+    .planet img {
+        width: 90%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 50%;
+        margin-left: -5px;
+    }
+   
+    .planet.faded {
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+   
+    .planet.faded img, .planet.faded .fish {
+      opacity: 1;
+      filter: brightness(1.08);
+    }
+
+
+    .planet[data-label]::after {
+        content: attr(data-label);
+        position: absolute;
+        bottom: -25px;
+        background: rgba(0,0,0,0.7);
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+   
+    svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: auto;
+        overflow: visible;
+    }
+   
+    line {
+        stroke: #555;
+        stroke-width: 5;
+        cursor: pointer;
+        transition: stroke .3s;
+    }
+   
+    line:hover {
+        stroke: #000;
+    }
+   
+    /* 4bit 連接兩個立方體的線條樣式 */
+    line.hyper-line {
+        stroke: #999;
+        stroke-dasharray: 6, 6;
+        opacity: 0.5;
+        stroke-width: 3;
+    }
+   
+    line.hyper-line:hover {
+        stroke: #333;
+        opacity: 1;
+        stroke-width: 6;
+        stroke-dasharray: none;
+    }
+    .cat-hat {
+      top: -20px;
+      width: 30%;
+      transform: translateX(-50%) translateX(5px) scale(0.6);
+      z-index: 25;
+    }
+    .fish-hat {
+      top: -5%;
+      width: 38%;
+      z-index: 30;
+      transform: translateX(-50%) scale(0.4);
+    }
+    .hat {
+      position: absolute;
+      left: 50%;
+      pointer-events: none;
+    }
+    .fish {
+        width: 10%;
+        height: 10%;
+        object-fit: contain;
+        pointer-events: none;
+        transition: transform .8s ease;
+        position: absolute;
+        top: 65%;
+        left: 48%;
+        transform: translate(-50%,-50%) scale(0.6);
+        transition: all 0.4s ease;
+        z-index: 20;
+    }
+   
+    .left-panel {
+        position: absolute;
+        left: 10px;
+        top: 3vh;
+        width: 230px;
+        background: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 14px;
+        font-size: 15px;
+        color: #000;
+        z-index: 100;
+        max-height: 85vh;
+        overflow-y: auto;
+        transition: all 0.4s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+   
+    .left-panel h3 { margin: 0 0 10px; font-size: 18px; text-align: center; color: #000; }
+   
+    #info { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #eee; }
+   
+    #levelNumber { font-size: 1.2rem; font-weight: bold; color: #000; }
+    #steps { font-size: 1.1rem; font-weight: bold; color: #000; }
+    #timer { font-size: 1rem; color: #000; }
+   
+    #buttons { display: flex; justify-content: center; gap: 10px; margin-top: 15px; width: 100%; }
+   
+    #resetBtn {
+        padding: 8px 16px;
+        background-color: #E2C8A0;
+        color: #000;
+        border: 1px solid #000;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        transition: 0.2s;
+    }
+    #resetBtn:hover { background-color: #D2B485; }
+   
+    #prevBtn, #nextBtn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 1px solid #000;
+        background-color: #ddd;
+        color: #000;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+   
+    #prevBtn::after { content: "◀"; position: relative; top: -1px; right: 3px; font-size: 1.2rem; }
+    #nextBtn::after { content: "▶"; position: relative; top: -1px; left: 3px; font-size: 1.2rem; }
+    #prevBtn:hover, #nextBtn:hover { background-color: #ccc; color: #000; }
+   
+    @media (max-width: 768px) {
+        #container { width: 380px; height: 380px; }
+        .planet { width: 120px; height: 120px; }
+        .fish { width: 60px; height: 60px; }
+        body { padding-bottom: 200px; }
+        .left-panel { top: auto; bottom: 20px; left: 20px; max-height: 40vh; }
+    }
+   
+    .slide-out-left { animation: slideOutLeft .6s forwards; }
+    .slide-in-right { animation: slideInRight .6s forwards; }
+    .slide-out-right { animation: slideOutRight .6s forwards; }
+    .slide-in-left { animation: slideInLeft .6s forwards; }
+   
+    @keyframes slideOutLeft { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-100%); opacity: 0; } }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+   
+    .popup { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn .3s ease; }
+    .popup-content { background: #fff; border-radius: 6px; border: 2px solid #000; padding: 30px 40px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,.3); animation: popUp .4s ease; max-width: 90%; }
+    .popup-content h2 { margin: 8px 0 10px; color: #000; }
+    .popup-content button {
+        background-color: #D33F31;
+        color: white;
+        border: 2px solid #A32A20;
+        border-radius: 20px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: 0.2s;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .popup-content button:hover { background-color: #B23428; }
+   
+    .gate-section { margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee; }
+    .gate-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .gate-btn {
+        flex: 1 1 45%;
+        padding: 6px 8px;
+        background-color: #ddd;
+        border: 1px solid #000;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        text-align: center;
+        transition: 0.2s;
+    }
+    .gate-btn:hover { background-color: #ccc; }
+   
+    .gate-list { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; max-height: 80px; overflow-y: auto; }
+    .gate-badge { display: flex; align-items: center; gap: 5px; padding: 3px 7px; background: #fff; border: 1px solid #000; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12px; box-shadow: 1px 1px 2px rgba(0,0,0,.1); }
+    .gate-badge .remove { width: 16px; height: 16px; background: #D33F31; color: #fff; border: 1px solid #A32A20; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .gate-badge .remove:hover { background: #B23428; }
+   
+    .reset-circuit-btn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 6px;
+        background-color: #ddd;
+        border: 1px solid #000;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        transition: 0.2s;
+    }
+    .reset-circuit-btn:hover { background-color: #ccc; }
+   
+    #undoBtn {
+        padding: 8px 16px;
+        background-color: #D33F31;
+        color: white;
+        border: 2px solid #A32A20;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+        width: 100%;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        transition: 0.2s;
+    }
+    #undoBtn:hover { background-color: #B23428; }
+    #undoBtn:disabled { opacity: 0.5; background-color: #D33F31; cursor: not-allowed; box-shadow: none; }
+   
+    .circuit-panel { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 1000px; background: #fff; border: 2px solid #000; border-radius: 6px; padding: 14px; font-size: 15px; color: #000; z-index: 100; transition: all 0.4s ease; }
+    .circuit-panel h3 { margin: 0 0 10px; font-size: 18px; color: #000; text-align: center; }
+   
+    .circuit-visualization { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; position: relative; }
+    .circuit-line { display: flex; align-items: center; height: 25px; position: relative; z-index: 10;}
+    .circuit-line-label { width: 30px; text-align: center; font-weight: bold; font-size: 14px; }
+    .circuit-line-path { flex: 1; height: 2px; background: #111111; position: relative; margin: 0 10px; }
+    .circuit-gate { position: absolute; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 4px; background: #D33F31; color: white; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; }
+    .circuit-control { position: absolute; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; border-radius: 50%; background: #111111; border: 2px solid #000000; }
+    .circuit-control.hollow { background: white !important; border: 2px solid #000000 !important; }
+    .circuit-target { position: absolute; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; color: #111111; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+    .circuit-target::after { content: "⊕"; }
+    .circuit-connector { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 2px; height: 100%; background: #111111; z-index: 1;}
+   
+    .hide-circuit-mode .left-panel, .hide-circuit-mode .circuit-panel { transform: translateX(-120%) !important; opacity: 0; pointer-events: none; }
+    .hide-circuit-mode .circuit-panel { transform: translateY(120%) !important; }
+   
+    .toggle-circuit-btn { position: fixed; top: 20px; right: 20px; width: 50px; height: 50px; background-color: #ddd; color: #000; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.15); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+    .toggle-circuit-btn:hover { background-color: #ccc; transform: scale(1.1); }
+    .toggle-circuit-btn::before { content: "⚡"; }
+    .hide-circuit-mode .toggle-circuit-btn::before { content: "👁️"; }
+</style>
+</head>
+<body>
+<div id="gameWrapper">
+  <h2 style="margin:10px 0 5px; font-weight:bold;">Hungry Cat: Fish Match Puzzle</h2>
+  <div id="container"><svg></svg></div>
+  <div id="buttons">
+    <button id="prevBtn"></button>
+    <button id="resetBtn">Restart</button>
+    <button id="nextBtn"></button>
+  </div>
+</div>
+<div class="left-panel">
+  <h3>Game Info</h3>
+  <div id="info">
+    <div id="levelNumber">Level: 1</div>
+    <div id="steps">Steps: 0</div>
+    <div id="timer">Time: 0 sec</div>
+  </div>
+  <div class="gate-section">
+    <h3>Select Bit Count</h3>
+    <select id="bitSelector">
+      <option value="1">1 BIT</option>
+      <option value="2" selected>2 BIT</option>
+      <option value="3">3 BIT</option>
+      <option value="4">4 BIT</option>
+    </select>
+    <h3 style="margin-top:10px;">Add Quantum Gate</h3>
+    <div class="gate-btns">
+      </div>
+    <h3 style="margin-top:10px;">Current Circuit</h3>
+    <div id="gateList" class="gate-list"></div>
+    <button class="reset-circuit-btn" onclick="resetCircuit()">Reset Circuit</button>
+    <button id="undoBtn" onclick="undoLastStep()" disabled>Undo Last Step</button>
+  </div>
+</div>
+<div class="circuit-panel">
+  <h3>Circuit Diagram</h3>
+  <div id="circuitVisualization" class="circuit-visualization"></div>
+</div>
+<div id="successPopup" class="popup">
+  <div class="popup-content">
+    <h2>Congratulations!</h2>
+    <p></p><br>
+    <button id="closePopup">Play Again</button>
+  </div>
+</div>
+<button class="toggle-circuit-btn" id="toggleCircuitBtn" title="Toggle Circuit Mode (or press H)"></button>
+
+
+<script>
+
+
+const successSound = new Audio("https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg");
+const swapSound = new Audio("https://actions.google.com/sounds/v1/foley/wind_swoosh_01.ogg");
+/* ==================== 圖片網址與資料 ==================== */
+const rawNew = "https://raw.githubusercontent.com/zzc06/contest/main/image/";
+
+const hatImg = rawNew + "hat(1).PNG"; // 你可以換成你的帽子圖片
+const planetImg = {
+  "3flower": rawNew + "RedCat.svg",
+  "Bob":     rawNew + "OrangeCat.svg",
+  "Kurover": rawNew + "GreenCat.svg",
+  "doll":    rawNew + "YellowCat.svg"
+};
+const fishImg = {
+  "3flowerFish": rawNew + "RedFish.svg",
+  "BobFish":     rawNew + "OrangeFish.svg",
+  "KuroFish":    rawNew + "GreenFish.svg",
+  "dollFish":    rawNew + "YellowFish.svg"
+};
+
+
+const planetImg3 = {
+  "3flower": rawNew + "RedCat.svg",
+  "Bob":     rawNew + "OrangeCat.svg",
+  "Kurover": rawNew + "GreenCat.svg",
+  "Siam":    rawNew + "YellowCat.svg",
+  "Black":   rawNew + "IndigoCat.svg",
+  "Bins":    rawNew + "PurpleCat.svg",
+  "Sakaban": rawNew + "BlueCat.svg",
+  "White":   rawNew + "BlackCat.svg"
+};
+const fishImg3 = {
+  "3flowerFish": rawNew + "RedFish.svg",
+  "BobFish":     rawNew + "OrangeFish.svg",
+  "KuroverFish": rawNew + "GreenFish.svg",
+  "SiamFish":    rawNew + "YellowFish.svg",
+  "BlackFish":   rawNew + "IndigoFish.svg",
+  "BinsFish":    rawNew + "PurpleFish.svg",
+  "SakabanFish": rawNew + "BlueFish.svg",
+  "WhiteFish":   rawNew + "BlackFish.svg"
+};
+
+
+// 4-bit 取得對應顏色的輔助函數 (15為黑色，其餘依序對應)
+const get4BitColor = (i) => {
+    //if (i === 15) return "White";
+    const colors = ["Red", "Orange", "Green", "Yellow", "Indigo", "Purple", "Blue", "Black"];
+    return colors[i % 8];
+};
+
+
+/* ==================== 原始 24 個 2bit 排列 ==================== */
+const permList = [
+  "0132","0213","0231","0312","0321",
+  "1023","1032","1203","1230","1302","1320",
+  "2013","2031","2103","2130","2301","2310",
+  "3012","3021","3102","3120","3201","3210"
+].map(s => s.split("").map(Number));
+
+
+/* ==================== 3bit / 4bit 隨機排列 ==================== */
+function genPerm(n) {
+  let a = Array.from({length: n}, (_, i) => i);
+  for (let i=n-1; i>0; i--) {
+    let j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+
+// === 修改為 30 關隨機 + 1 關全反轉邏輯 ===
+const permList3bit = Array.from({length: 30}, () => genPerm(8));
+permList3bit.push([7, 6, 5, 4, 3, 2, 1, 0]);
+
+
+// 4bit 排列：特別設計
+const permList4bit = [];
+
+// 第 1 關 (Index 0)：強制完全交換 (Cross Swap) 
+// - 左邊星球全是右邊的魚，右邊星球全是左邊的魚
+permList4bit.push(Array.from({length: 16}, (_, i) => (i + 8) % 16));
+
+// 第 2 關 (Index 1)：完全反轉 (原本的第 3 關移到這裡)
+// - 讓 0000 變成 1111, 0001 變成 1110 ... 依此類推
+permList4bit.push(Array.from({length: 16}, (_, i) => 15 - i));
+
+// 後續隨機補滿 (原本的隨機邏輯)
+for(let k=0; k<10; k++) permList4bit.push(genPerm(16));
+
+/* ==================== 關卡資料 ==================== */
+let bitCount = 2;
+
+
+function generate4BitLevelData() {
+    const basePos = [
+        {top:140, left:140}, // 000
+        {top:140, left:340}, // 001
+        {top:340, left:140}, // 010
+        {top:340, left:340}, // 011
+        {top:20,  left:20},  // 100
+        {top:20,  left:460}, // 101
+        {top:460, left:20},  // 110
+        {top:460, left:460}  // 111
+    ];
+
+
+    const planets = [];
+    const scale = 1.7;
+
+
+    // Cube 1 (左邊)
+    const offX1 = 0;
+    const offY1 = 180;
+
+
+    // Cube 2 (右邊)
+    const offX2 = 500;
+    const offY2 = 20;
+
+
+    for(let i=0; i<8; i++) {
+        let keyStr = i.toString(2).padStart(4, "0");
+        planets.push({
+            id: `planet${i}`,
+            key: keyStr,
+            label: keyStr,
+            top: basePos[i].top/scale + offY1,
+            left: basePos[i].left/scale + offX1,
+            isFaded: false
+        });
+    }
+    for(let i=0; i<8; i++) {
+        let keyStr = (i+8).toString(2).padStart(4, "0");
+        planets.push({
+            id: `planet${i+8}`,
+            key: keyStr,
+            label: keyStr,
+            top: basePos[i].top/scale + offY2,
+            left: basePos[i].left/scale + offX2,
+            isFaded: true
+        });
+    }
+
+
+    const lines = [];
+    const baseConnections = [
+        [0,1],[0,2],[1,3],[2,3],
+        [4,5],[4,6],[5,7],[6,7],
+        [0,4],[1,5],[2,6],[3,7]  
+    ];
+    baseConnections.forEach(([a,b]) => {
+        lines.push([`l${a}_${b}`, `planet${a}`, `planet${b}`]);
+        lines.push([`l${a+8}_${b+8}`, `planet${a+8}`, `planet${b+8}`]);
+    });
+
+
+    for(let i=0; i<8; i++) {
+        lines.push([`hyper${i}`, `planet${i}`, `planet${i+8}`, true]);
+    }
+
+
+    return (permIndex) => {
+        const perm = permList4bit[permIndex] || permList4bit[0];
+        const princes = [];
+       
+        for(let i=0; i<16; i++) {
+            const color = get4BitColor(i);
+            princes.push({
+                img: rawNew + color + "Fish.svg",
+                target: `planet${i}`,
+                // 標記 target >= 8 的魚為虛擬魚，遊戲勝利判定及自動刷淡都會用到
+                isFadedFish: i >= 8
+            });
+        }
+        return { planets, lines, princes };
+    };
+}
+
+
+const get4BitLevel = generate4BitLevelData();
+
+
+const bitLevels = {
+  1: [{
+    planets: [
+      {id:"planet1", key:"3flower", label:"0", top:140, left:20},
+      {id:"planet2", key:"Bob", label:"1", top:140, left:260}
+    ],
+    princes: [
+      {img: fishImg["3flowerFish"], target:"planet1"},
+      {img: fishImg["BobFish"], target:"planet2"}
+    ],
+    lines:[["line12","planet1","planet2"]]
+  }],
+ 
+  2: Array.from({length: permList.length}, () => ({
+    planets: [
+      {id:"planet1", key:"3flower", label:"00", top:0,   left:0},
+      {id:"planet2", key:"Bob",     label:"01", top:0,   left:280},
+      {id:"planet3", key:"Kurover", label:"10", top:280, left:0},
+      {id:"planet4", key:"doll",    label:"11", top:280, left:280}
+    ],
+    princes: [
+      {img: fishImg["3flowerFish"], target:"planet1"},
+      {img: fishImg["BobFish"],     target:"planet2"},
+      {img: fishImg["KuroFish"],    target:"planet3"},
+      {img: fishImg["dollFish"],    target:"planet4"}
+    ],
+    lines: [
+      ["line12","planet1","planet2"],
+      ["line13","planet1","planet3"],
+      ["line24","planet2","planet4"],
+      ["line34","planet3","planet4"]
+    ]
+  })),
+ 
+  3: permList3bit.map(() => ({
+    planets: [
+      {id:"planet0", key:"3flower", label:"000", top:140, left:140},
+      {id:"planet1", key:"Bob",     label:"001", top:140, left:340},
+      {id:"planet2", key:"Kurover", label:"010", top:340, left:140},
+      {id:"planet3", key:"Siam",    label:"011", top:340, left:340},
+      {id:"planet4", key:"Black",   label:"100", top:20,  left:20},
+      {id:"planet5", key:"Bins",    label:"101", top:20,  left:460},
+      {id:"planet6", key:"Sakaban", label:"110", top:460, left:20},
+      {id:"planet7", key:"White",   label:"111", top:460, left:460}
+    ],
+    princes: [
+      {img: fishImg3["3flowerFish"], target:"planet0"},
+      {img: fishImg3["BobFish"],     target:"planet1"},
+      {img: fishImg3["KuroverFish"], target:"planet2"},
+      {img: fishImg3["SiamFish"],    target:"planet3"},
+      {img: fishImg3["BlackFish"],   target:"planet4"},
+      {img: fishImg3["BinsFish"],    target:"planet5"},
+      {img: fishImg3["SakabanFish"], target:"planet6"},
+      {img: fishImg3["WhiteFish"],   target:"planet7"}
+    ],
+    lines: [
+      ["l01","planet0","planet1"],["l02","planet0","planet2"],["l13","planet1","planet3"],["l23","planet2","planet3"],
+      ["l45","planet4","planet5"],["l46","planet4","planet6"],["l57","planet5","planet7"],["l67","planet6","planet7"],
+      ["l04","planet0","planet4"],["l15","planet1","planet5"],["l26","planet2","planet6"],["l37","planet3","planet7"]
+    ]
+  })),
+ 
+  4: permList4bit.map((_, idx) => get4BitLevel(idx))
+};
+
+
+/* ==================== 核心變數 ==================== */
+let currentLevel = 0, steps = 0, startTime, timerInterval;
+let circuit = [], currentMap = [];
+let planets = {}, princes = [];
+let history = [];
+const stepDisplay = document.getElementById("steps");
+const timerDisplay = document.getElementById("timer");
+const container = document.getElementById("container");
+const svg = container.querySelector("svg");
+const undoBtn = document.getElementById("undoBtn");
+
+
+/* ==================== 工具函數 ==================== */
+function stateIndexToBits(i) { return i.toString(2).padStart(bitCount,"0").split("").map(Number); }
+function bitsToStateIndex(bits) { return parseInt(bits.join(""),2); }
+
+
+function applyGateToIndex(stateIndex, gate){
+  const b = stateIndexToBits(stateIndex);
+  const nb = b.slice();
+  const getBitIndex = (t) => t;
+
+
+  switch(gate.type){
+    case "X":
+      nb[getBitIndex(gate.target)] ^= 1;
+      break;
+    case "CNOT":
+      if(nb[getBitIndex(gate.control)]) nb[getBitIndex(gate.target)] ^= 1;
+      break;
+    case "0CNOT":
+      if(nb[getBitIndex(gate.control)]===0) nb[getBitIndex(gate.target)] ^= 1;
+      break;
+    case "CCNOT":
+      const c1Val = nb[getBitIndex(gate.control1)];
+      const c2Val = nb[getBitIndex(gate.control2)];
+      const c1Ok = (gate.c1Val === 1) ? (c1Val === 1) : (c1Val === 0);
+      const c2Ok = (gate.c2Val === 1) ? (c2Val === 1) : (c2Val === 0);
+      if(c1Ok && c2Ok) {
+        nb[getBitIndex(gate.target)] ^= 1;
+      }
+      break;
+    case "MCNOT":
+      let trigger = true;
+      for(let c of gate.controls) {
+          const currentBitVal = nb[getBitIndex(c.bit)];
+          if(currentBitVal !== c.val) {
+              trigger = false;
+              break;
+          }
+      }
+      if(trigger) {
+          nb[getBitIndex(gate.target)] ^= 1;
+      }
+      break;
+  }
+  return bitsToStateIndex(nb);
+}
+
+
+function renderGateButtons(){
+  const box = document.querySelector(".gate-btns");
+  box.innerHTML = "";
+
+
+  let gates = [];
+
+
+  if (bitCount === 4) {
+      // 4 Bit
+      [0,1,2,3].forEach(i => {
+          gates.push({text:`X q${i}`, g:{type:"X", target:i}});
+      });
+      gates.push({text:"CNOT q0→q1", g:{type:"CNOT", control:0, target:1}});
+      gates.push({text:"CNOT q3→q2", g:{type:"CNOT", control:3, target:2}});
+  } else if (bitCount === 3) {
+      // 完整的 3-bit 閘門設定
+     
+      // 3個 單量子比特 X
+      gates.push({text:"X q0", g:{type:"X",target:0}});
+      gates.push({text:"X q1", g:{type:"X",target:1}});
+      gates.push({text:"X q2", g:{type:"X",target:2}});
+
+
+      // 12 個 Toffoli Gates (依目標位元分組)
+      // Target: q2 (Controls: q0, q1)
+      gates.push({text:"TOF(q0,q1,   q2)", g:{type:"CCNOT", control1:0, c1Val:1, control2:1, c2Val:1, target:2}});
+      gates.push({text:"TOF(q0',q1', q2)", g:{type:"CCNOT", control1:0, c1Val:0, control2:1, c2Val:0, target:2}});
+      gates.push({text:"TOF(q0',q1,  q2)", g:{type:"CCNOT", control1:0, c1Val:0, control2:1, c2Val:1, target:2}});
+      gates.push({text:"TOF(q0,q1',  q2)", g:{type:"CCNOT", control1:0, c1Val:1, control2:1, c2Val:0, target:2}});
+
+
+      // Target: q1 (Controls: q0, q2)
+      gates.push({text:"TOF(q0,q2,   q1)", g:{type:"CCNOT", control1:0, c1Val:1, control2:2, c2Val:1, target:1}});
+      gates.push({text:"TOF(q0',q2', q1)", g:{type:"CCNOT", control1:0, c1Val:0, control2:2, c2Val:0, target:1}});
+      gates.push({text:"TOF(q0',q2,  q1)", g:{type:"CCNOT", control1:0, c1Val:0, control2:2, c2Val:1, target:1}});
+      gates.push({text:"TOF(q0,q2',  q1)", g:{type:"CCNOT", control1:0, c1Val:1, control2:2, c2Val:0, target:1}});
+
+
+      // Target: q0 (Controls: q1, q2)
+      gates.push({text:"TOF(q1,q2,   q0)", g:{type:"CCNOT", control1:1, c1Val:1, control2:2, c2Val:1, target:0}});
+      gates.push({text:"TOF(q1',q2', q0)", g:{type:"CCNOT", control1:1, c1Val:0, control2:2, c2Val:0, target:0}});
+      gates.push({text:"TOF(q1',q2,  q0)", g:{type:"CCNOT", control1:1, c1Val:0, control2:2, c2Val:1, target:0}});
+      gates.push({text:"TOF(q1,q2',  q0)", g:{type:"CCNOT", control1:1, c1Val:1, control2:2, c2Val:0, target:0}});
+
+
+      // 6 個普通 CNOT (1-Control)
+      gates.push({text:"CNOT q0→q1", g:{type:"CNOT",control:0,target:1}});
+      gates.push({text:"CNOT q1→q0", g:{type:"CNOT",control:1,target:0}});
+      gates.push({text:"CNOT q0→q2", g:{type:"CNOT",control:0,target:2}});
+      gates.push({text:"CNOT q2→q0", g:{type:"CNOT",control:2,target:0}});
+      gates.push({text:"CNOT q1→q2", g:{type:"CNOT",control:1,target:2}});
+      gates.push({text:"CNOT q2→q1", g:{type:"CNOT",control:2,target:1}});
+
+
+      // 6 個 0-Control CNOT
+      gates.push({text:"0CNOT q0→q1", g:{type:"0CNOT",control:0,target:1}});
+      gates.push({text:"0CNOT q1→q0", g:{type:"0CNOT",control:1,target:0}});
+      gates.push({text:"0CNOT q0→q2", g:{type:"0CNOT",control:0,target:2}});
+      gates.push({text:"0CNOT q2→q0", g:{type:"0CNOT",control:2,target:0}});
+      gates.push({text:"0CNOT q1→q2", g:{type:"0CNOT",control:1,target:2}});
+      gates.push({text:"0CNOT q2→q1", g:{type:"0CNOT",control:2,target:1}});
+
+
+  } else if (bitCount === 2) {
+      // 2-bit 閘門
+      gates.push({text:"X q0", g:{type:"X",target:0}});
+      gates.push({text:"X q1", g:{type:"X",target:1}});
+      gates.push({text:"1CNOT q0→q1", g:{type:"CNOT",control:0,target:1}});
+      gates.push({text:"0CNOT q0→q1", g:{type:"0CNOT",control:0,target:1}});
+      gates.push({text:"1CNOT q1→q0", g:{type:"CNOT",control:1,target:0}});
+      gates.push({text:"0CNOT q1→q0", g:{type:"0CNOT",control:1,target:0}});
+  } else {
+      // 1-bit 閘門
+      gates.push({text:"X q0", g:{type:"X",target:0}});
+  }
+
+
+  gates.forEach(o=>{
+    const b = document.createElement("button");
+    b.className="gate-btn";
+    b.textContent = o.text;
+    b.onclick = ()=>applyGateAndAnimate(o.g);
+    box.appendChild(b);
+  });
+}
+
+
+/* ==================== 其餘函數 ==================== */
+function addGateToList(g){ circuit.push(g); renderGateList(); renderCircuitVisualization(); }
+
+
+function resetCircuit(){
+  saveStateToHistory();
+  circuit = [];
+  currentMap = Array.from({length: 1<<bitCount}, (_,i)=>i);
+  renderGateList();
+  renderCircuitVisualization();
+  softResetFish();
+  updateUndoButton();
+}
+
+
+function renderGateList(){
+  const box = document.getElementById("gateList"); box.innerHTML = "";
+  circuit.forEach((g,idx)=>{
+    const el = document.createElement("div"); el.className = "gate-badge";
+    let label = "";
+    if(g.type==="X") label = `X q${g.target}`;
+    else if(g.type==="CNOT") label = `C${g.control}X${g.target}`;
+    else if(g.type==="0CNOT") label = `0C${g.control}X${g.target}`;
+    else if(g.type==="CCNOT") {
+      label = `C${g.control1}(${g.c1Val})C${g.control2}(${g.c2Val})X${g.target}`;
+    } else if(g.type==="MCNOT") {
+        const ctrls = g.controls.map(c => `q${c.bit}(${c.val})`).join(",");
+        label = `M(${ctrls})→X${g.target}`;
+    }
+    el.innerHTML = `<span>${label}</span>`;
+    const x = document.createElement("button"); x.className="remove"; x.textContent="x";
+    x.onclick = ()=>{ saveStateToHistory(); circuit.splice(idx,1); renderGateList(); renderCircuitVisualization(); updateUndoButton(); };
+    el.appendChild(x); box.appendChild(el);
+  });
+}
+
+
+function saveStateToHistory() {
+  const fishData = {};
+  Object.keys(planets).forEach(id=>{
+      const f = planets[id].querySelector(".fish");
+      if(f) {
+          fishData[id] = { src: f.src, isGhost: f.classList.contains("ghost-fish") };
+      }
+  });
+
+
+  const state = { circuit: JSON.parse(JSON.stringify(circuit)), currentMap: [...currentMap], fish: fishData };
+  history.push(state);
+  if(history.length > 50) history.shift();
+  updateUndoButton();
+}
+
+
+// 恢復歷史紀錄
+function restoreFishPositions(fishData){
+  Object.values(planets).forEach(p =>
+    p.querySelectorAll(".fish, .fish-hat").forEach(el => el.remove())
+  );
+
+  Object.entries(fishData).forEach(([id, data])=>{
+    if(planets[id]){
+      const img = document.createElement("img");
+      img.src = data.src;
+      img.className = "fish";
+      if(data.isGhost) img.classList.add("ghost-fish");
+
+      planets[id].appendChild(img);
+
+      if(data.isGhost){
+        const hat = document.createElement("img");
+        hat.src = hatImg;
+        hat.className = "hat fish-hat";
+        planets[id].appendChild(hat);
+      }
+    }
+  });
+}
+
+
+function undoLastStep(){
+  if(history.length===0) return;
+  const prev = history.pop();
+  circuit = prev.circuit; currentMap = prev.currentMap;
+  renderGateList(); renderCircuitVisualization();
+  restoreFishPositions(prev.fish);
+  steps = Math.max(0, steps-1); stepDisplay.textContent = `Steps: ${steps}`;
+  updateUndoButton();
+}
+
+
+function updateUndoButton(){ undoBtn.disabled = history.length === 0; }
+
+
+function renderCircuitVisualization(){
+  const c = document.getElementById("circuitVisualization"); c.innerHTML = "";
+  for(let i=0; i<bitCount; i++){
+    const line = document.createElement("div"); line.className="circuit-line";
+    line.innerHTML = `<div class="circuit-line-label">q${i}</div><div class="circuit-line-path" id="circuit-line-${i}"></div>`;
+    c.appendChild(line);
+  }
+  const GRID = 25;
+  circuit.forEach((gate,idx)=>{
+    const pos = GRID*(idx+1);
+    if(gate.type==="X") addXGate(gate.target, pos);
+    else if(gate.type==="CNOT") addCNOTGate(gate.control, gate.target, pos, false);
+    else if(gate.type==="0CNOT") addCNOTGate(gate.control, gate.target, pos, true);
+    else if(gate.type==="CCNOT") addCCNOTGate(gate, pos);
+    else if(gate.type==="MCNOT") addMCNOTGate(gate, pos);
+  });
+}
+
+
+function addXGate(t,p){ const l=document.getElementById(`circuit-line-${t}`); const g=document.createElement("div"); g.className="circuit-gate"; g.textContent="X"; g.style.left=p+"px"; l.appendChild(g); }
+
+
+function addCNOTGate(c, t, p, hollow) {
+    const ROW_H = 33;
+    const min = Math.min(c, t);
+    const max = Math.max(c, t);
+    const topPos = (min * ROW_H) + 12.5;
+    const height = (max - min) * ROW_H;
+    const container = document.getElementById("circuitVisualization");
+    const conn = document.createElement("div");
+    conn.className = "circuit-connector";
+    conn.style.left = (46 + p) + "px";
+    conn.style.top = (topPos+5) + "px";
+    conn.style.height = (height-10) + "px";
+    conn.style.transform = "none";
+    container.appendChild(conn);
+   
+    const cl = document.getElementById(`circuit-line-${c}`);
+    const cd = document.createElement("div");
+    cd.className = hollow ? "circuit-control hollow" : "circuit-control";
+    cd.style.left = p + "px";
+    cl.appendChild(cd);
+   
+    const tl = document.getElementById(`circuit-line-${t}`);
+    const td = document.createElement("div");
+    td.className = "circuit-target";
+    td.style.left = (p - 2.2) + "px";
+    tl.appendChild(td);
+}
+
+
+function addCCNOTGate(g, p) {
+    const ROW_H = 33;
+    const lines = [g.control1, g.control2, g.target].sort((a, b) => a - b);
+    const min = lines[0];
+    const max = lines[lines.length-1];
+    const topPos = (min * ROW_H) + 12.5;
+    const height = (max - min) * ROW_H;
+   
+    const container = document.getElementById("circuitVisualization");
+    const conn = document.createElement("div");
+    conn.className = "circuit-connector";
+    conn.style.left = (46 + p) + "px";
+    conn.style.top = (topPos+5) + "px";
+    conn.style.height = (height-10) + "px";
+    conn.style.transform = "none";
+    container.appendChild(conn);
+   
+    const c1l = document.getElementById(`circuit-line-${g.control1}`);
+    const c1d = document.createElement("div");
+    c1d.className = g.c1Val === 0 ? "circuit-control hollow" : "circuit-control";
+    c1d.style.left = p + "px";
+    c1l.appendChild(c1d);
+   
+    const c2l = document.getElementById(`circuit-line-${g.control2}`);
+    const c2d = document.createElement("div");
+    c2d.className = g.c2Val === 0 ? "circuit-control hollow" : "circuit-control";
+    c2d.style.left = p + "px";
+    c2l.appendChild(c2d);
+   
+    const tl = document.getElementById(`circuit-line-${g.target}`);
+    const td = document.createElement("div");
+    td.className = "circuit-target";
+    td.style.left = (p - 2.2) + "px";
+    tl.appendChild(td);
+}
+
+
+function addMCNOTGate(g, p) {
+    const ROW_H = 33;
+    const involved = g.controls.map(c => c.bit).concat([g.target]).sort((a,b)=>a-b);
+    const min = involved[0];
+    const max = involved[involved.length-1];
+   
+    const topPos = (min * ROW_H) + 12.5;
+    const height = (max - min) * ROW_H;
+   
+    const container = document.getElementById("circuitVisualization");
+    const conn = document.createElement("div");
+    conn.className = "circuit-connector";
+    conn.style.left = (46 + p) + "px";
+    conn.style.top = (topPos+5) + "px";
+    conn.style.height = (height-10) + "px";
+    conn.style.transform = "none";
+    container.appendChild(conn);
+
+
+    g.controls.forEach(c => {
+        const line = document.getElementById(`circuit-line-${c.bit}`);
+        const dot = document.createElement("div");
+        dot.className = c.val === 0 ? "circuit-control hollow" : "circuit-control";
+        dot.style.left = p + "px";
+        line.appendChild(dot);
+    });
+
+
+    const tl = document.getElementById(`circuit-line-${g.target}`);
+    const td = document.createElement("div");
+    td.className = "circuit-target";
+    td.style.left = (p - 2.2) + "px";
+    tl.appendChild(td);
+}
+
+
+function applyGateAndAnimate(gate){
+  saveStateToHistory();
+  addGateToList(gate);
+  const size = 1 << bitCount;
+  currentMap = Array.from({length:size}, (_,i)=>applyGateToIndex(i, gate));
+  const perm = Array.from({length:size}, (_,i)=>applyGateToIndex(i, gate));
+ 
+  perm.forEach((to,from)=>{
+    if(to === from) return;
+
+
+    let pidFrom, pidTo;
+   
+    if (bitCount === 1) {
+      pidFrom = "planet" + (from + 1);
+      pidTo = "planet" + (to + 1);
+    } else if (bitCount === 2) {
+      pidFrom = "planet" + (from + 1);
+      pidTo = "planet" + (to + 1);
+    } else {
+      pidFrom = "planet" + from;
+      pidTo = "planet" + to;
+    }
+
+
+    const fish = planets[pidFrom]?.querySelector(".fish");
+    const hat = planets[pidFrom]?.querySelector(".fish-hat");
+    if(!fish) return;
+   
+    const r1 = planets[pidFrom].getBoundingClientRect();
+    const r2 = planets[pidTo].getBoundingClientRect();
+    const dx = r2.left - r1.left, dy = r2.top - r1.top;
+   
+    fish.style.transform = `translate(${dx}px,${dy}px) translate(-50%,-50%) scale(0.6)`;
+    if(hat){
+                hat.style.transform = `translate(${dx}px,${dy}px) translateX(-50%) scale(0.4)`;
+            }
+    setTimeout(()=>{
+        if(planets[pidTo]) {
+            planets[pidTo].appendChild(fish);
+            if(hat) planets[pidTo].appendChild(hat);
+            fish.style.transform="translate(-50%,-50%) scale(0.6)";
+            if(hat) hat.style.transform="translateX(-50%) scale(0.4)";
+            /* if(hat){
+                hat.style.transform = `translate(${dx}px,${dy}px) translateX(-50%)`;
+            } */
+
+            // ⭐ 判斷是否到正確位置
+            const correctFish = princes.find(p => p.target === pidTo);
+            if (correctFish) {
+                // 檢查圖片網址是否相符
+                const srcMatch = fish.src === correctFish.img || decodeURIComponent(fish.src) === decodeURIComponent(correctFish.img);
+               
+                // 檢查「刷淡狀態」是否相符 (如果是 1~3 bit，isFadedFish 會是 undefined，轉為 false 剛好符合邏輯)
+                const isImgFaded = fish.classList.contains("ghost-fish");
+                const isTargetFaded = !!correctFish.isFadedFish;
+
+
+                if (srcMatch && isImgFaded === isTargetFaded) {
+                    successSound.currentTime = 0;
+                    successSound.play();
+                }
+            }
+        }
+        checkSuccess();
+    }, 800);
+  });
+  steps++; stepDisplay.textContent = `Steps: ${steps}`;
+  updateUndoButton();
+}
+
+
+function getCurrentLevel(){ return bitLevels[bitCount][currentLevel]; }
+
+
+function loadLevel(idx){
+  document.getElementById("levelNumber").textContent = `Level: ${idx+1}`;
+  container.querySelectorAll(".planet").forEach(p=>p.remove());
+  svg.innerHTML=""; planets = {};
+  const level = getCurrentLevel();
+ 
+  let planetSize = 140;
+  if (bitCount===3) planetSize = 90;
+  if (bitCount===4) planetSize = 70;
+
+
+  if (bitCount===4) {
+      container.style.width = "900px";
+      container.style.height = "550px";
+  } else if (bitCount===3) {
+      container.style.width = "600px";
+      container.style.height = "600px";
+  } else {
+      container.style.width = "420px";
+      container.style.height = "420px";
+  }
+
+
+  level.planets.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "planet";
+    if(p.isFaded) div.classList.add("faded");
+    div.id = p.id;
+    div.style.top = p.top+"px"; div.style.left = p.left+"px";
+    div.style.width = div.style.height = planetSize+"px";
+    if(p.label) div.setAttribute("data-label", p.label);
+   
+    const img = document.createElement("img");
+    if(bitCount===4) {
+         const catIdx = parseInt(p.key, 2);
+         const color = get4BitColor(catIdx);
+         img.src = rawNew + color + "Cat.svg";
+    } else if (bitCount===3) {
+         img.src = planetImg3[p.key];
+    } else if (bitCount===2) {
+         img.src = planetImg[p.key];
+    } else {
+         img.src = p.key === "3flower" ? planetImg["3flower"] : planetImg["Bob"];
+    }
+    div.appendChild(img);
+      // ⭐ faded planet 也加帽子
+    if (p.isFaded) {
+        const hat = document.createElement("img");
+        hat.src = hatImg;
+        hat.className = "hat cat-hat";
+        div.appendChild(hat);
+    }
+    container.appendChild(div);
+    planets[p.id] = div;
+  });
+ 
+  const offset = planetSize / 2;
+  level.lines.forEach(([id,p1,p2,isHyper])=>{
+    const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+    const pl1 = level.planets.find(x=>x.id===p1);
+    const pl2 = level.planets.find(x=>x.id===p2);
+    line.setAttribute("x1",pl1.left+offset); line.setAttribute("y1",pl1.top+offset);
+    line.setAttribute("x2",pl2.left+offset); line.setAttribute("y2",pl2.top+offset);
+    line.style.stroke = "#555";
+    line.style.strokeWidth = "4";
+    if(isHyper) line.classList.add("hyper-line");
+
+
+    svg.appendChild(line);
+   
+    line.addEventListener("mouseenter",()=>{
+        line.style.stroke="#ffcc00";
+        line.style.strokeWidth="8";
+    });
+    line.addEventListener("mouseleave",()=>{
+        line.style.stroke = isHyper ? "#999" : "#555";
+        line.style.strokeWidth = isHyper ? "3" : "4";
+    });
+    line.addEventListener("click",()=>onLineClick(p1,p2));
+  });
+
+
+  princes = JSON.parse(JSON.stringify(level.princes));
+  placePrincesByFixedArrangement(idx);
+  steps = 0; stepDisplay.textContent = "Steps: 0";
+  startTimer(); renderCircuitVisualization(); history = []; updateUndoButton();
+}
+
+
+function placePrincesByFixedArrangement(idx){
+  Object.values(planets).forEach(p =>  {
+    p.querySelectorAll(".fish, .fish-hat").forEach(el => el.remove());
+
+    // 補上 faded cat 的帽子
+    if (p.classList.contains("faded") && !p.querySelector(".cat-hat")) {
+      const hat = document.createElement("img");
+      hat.src = hatImg;
+      hat.className = "hat cat-hat";
+      p.appendChild(hat);
+    }
+  });
+ 
+  if(bitCount===4){
+     const perm = permList4bit[idx] || permList4bit[0];
+     
+     perm.forEach((fishIdx, pos)=>{
+         const img = document.createElement("img");
+         const color = get4BitColor(fishIdx);
+         img.src = rawNew + color + "Fish.svg";
+         img.className = "fish";
+         
+         // 標記虛擬魚，遊戲 CSS 會自動刷淡
+         if(fishIdx >= 8) {
+          img.classList.add("ghost-fish");
+
+          // ❌ 不再刷淡
+          img.style.opacity = "1";
+          img.style.filter = "none";
+
+          // ⭐ 加帽子
+          const hat = document.createElement("img");
+          hat.src = hatImg;
+          hat.className = "hat fish-hat";
+          planets[`planet${pos}`].appendChild(hat);
+         }
+         
+         if(planets[`planet${pos}`]) planets[`planet${pos}`].appendChild(img);
+     });
+  } else if(bitCount===3){
+    const perm = permList3bit[idx];
+    const order = ["3flowerFish","BobFish","KuroverFish","SiamFish","BlackFish","BinsFish","SakabanFish","WhiteFish"];
+    const ids = ["planet0","planet1","planet2","planet3","planet4","planet5","planet6","planet7"];
+    perm.forEach((fishIdx,pos)=>{
+      const img = document.createElement("img");
+      img.src = fishImg3[order[fishIdx]];
+      img.className = "fish";
+      planets[ids[pos]].appendChild(img);
+    });
+  } else if(bitCount===1){
+    const ids = ["planet1","planet2"];
+    const fishList = [fishImg["3flowerFish"], fishImg["BobFish"]];
+    fishList.forEach((src, i) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.className = "fish";
+        planets[ids[i]].appendChild(img);
+    });
+  } else if(bitCount===2){
+    const perm = permList[idx];
+    const fishOrder = [fishImg["3flowerFish"], fishImg["BobFish"], fishImg["KuroFish"], fishImg["dollFish"]];
+    const ids = ["planet1","planet2","planet3","planet4"];
+   
+    perm.forEach((fishIdx,pos)=>{
+      const img = document.createElement("img");
+      img.src = fishOrder[fishIdx];
+      img.className = "fish";
+      planets[ids[pos]].appendChild(img);
+    });
+  }
+}
+
+
+function checkSuccess(){
+  const ok = princes.every(p=>{
+    const img = planets[p.target].querySelector(".fish");
+    if(!img) return false;
+   
+    // 條件 1：圖片網址相符
+    const srcMatch = img.src === p.img || decodeURIComponent(img.src) === decodeURIComponent(p.img);
+   
+    // 條件 2：刷淡狀態必須一致（實體魚對實體星球、虛擬魚對虛擬星球）
+    const isImgFaded = img.classList.contains("ghost-fish");
+    const isTargetFaded = !!p.isFadedFish;
+   
+    return srcMatch && (isImgFaded === isTargetFaded);
+  });
+ 
+  if(ok){
+    clearInterval(timerInterval);
+    showPopup(steps, Math.floor((Date.now()-startTime)/1000));
+  }
+}
+
+
+function startTimer(){
+  clearInterval(timerInterval);
+  startTime = Date.now();
+  timerInterval = setInterval(()=>{ timerDisplay.textContent = `Time: ${Math.floor((Date.now()-startTime)/1000)} sec`; },1000);
+}
+
+
+function showPopup(s,t){ document.querySelector("#successPopup p").innerHTML = `Awesome! You took ${s} steps and spent ${t} seconds to match every cat with their fish!`; document.getElementById("successPopup").style.display = "flex"; }
+
+
+function softResetFish(){ steps=0; stepDisplay.textContent="Steps: 0"; placePrincesByFixedArrangement(currentLevel); startTimer(); history=[]; updateUndoButton(); }
+
+
+function onLineClick(p1Str, p2Str) {
+  let p1, p2;
+ 
+  // 播放咻咻音效
+  swapSound.currentTime = 0; // 重置時間，確保連續點擊也能發聲
+  swapSound.play();
+
+
+  if (bitCount === 1) {
+    applyGateAndAnimate({ type: "X", target: 0 });
+    return;
+  }
+ 
+  if (bitCount === 2) {
+    p1 = parseInt(p1Str.replace("planet", "")) - 1;
+    p2 = parseInt(p2Str.replace("planet", "")) - 1;
+   
+    const gate = generateGateFromTransition(p1, p2, bitCount);
+    if(gate) applyGateAndAnimate(gate);
+    return;
+  }
+ 
+  if (bitCount === 3 || bitCount === 4) {
+    p1 = parseInt(p1Str.replace("planet", ""));
+    p2 = parseInt(p2Str.replace("planet", ""));
+   
+    const gate = generateGateFromTransition(p1, p2, bitCount);
+    if(gate) applyGateAndAnimate(gate);
+    return;
+  }
+}
+
+
+function generateGateFromTransition(s1, s2, bits) {
+    const b1 = stateIndexToBits(s1);
+    const b2 = stateIndexToBits(s2);
+
+
+    let target = -1;
+    const controls = [];
+
+
+    for(let i=0; i<bits; i++){
+        if(b1[i] !== b2[i]) {
+            if(target !== -1) return null;
+            target = i;
+        } else {
+            controls.push({bit: i, val: b1[i]});
+        }
+    }
+
+
+    if(target === -1) return null;
+
+
+    if (controls.length === 1) {
+        const c = controls[0];
+        return {
+            type: c.val === 1 ? "CNOT" : "0CNOT",
+            control: c.bit,
+            target: target
+        };
+    } else if (controls.length === 2) {
+        return {
+            type: "CCNOT",
+            control1: controls[0].bit, c1Val: controls[0].val,
+            control2: controls[1].bit, c2Val: controls[1].val,
+            target: target
+        };
+    } else {
+        return {
+            type: "MCNOT",
+            controls: controls,
+            target: target
+        };
+    }
+}
+
+
+// 事件監聽器
+document.getElementById("closePopup").onclick = ()=>{ document.getElementById("successPopup").style.display="none"; resetCircuit(); };
+document.getElementById("resetBtn").onclick = ()=>{ resetCircuit(); };
+document.getElementById("bitSelector").onchange = (e)=>{
+  bitCount = parseInt(e.target.value);
+  currentLevel = 0;
+  circuit = [];
+  renderGateButtons();
+  loadLevel(currentLevel);
+  resetCircuit();
+};
+
+
+let animating=false;
+function transitionLevel(next,dir){
+  if(animating) return; animating=true;
+  container.classList.add(dir==="left"?"slide-out-left":"slide-out-right");
+  setTimeout(()=>{
+    currentLevel = next;
+    loadLevel(currentLevel);
+    container.classList.remove("slide-out-left","slide-out-right");
+    container.classList.add(dir==="left"?"slide-in-right":"slide-in-left");
+    setTimeout(()=>{ container.classList.remove("slide-in-right","slide-in-left"); animating=false; },620);
+  },320);
+}
+
+
+document.getElementById("prevBtn").onclick = ()=>{ const L=bitLevels[bitCount].length; transitionLevel((currentLevel-1+L)%L,"left"); resetCircuit(); };
+document.getElementById("nextBtn").onclick = ()=>{ const L=bitLevels[bitCount].length; transitionLevel((currentLevel+1)%L,"right"); resetCircuit(); };
+
+
+const toggleBtn = document.getElementById('toggleCircuitBtn');
+let hidden = false;
+toggleBtn.addEventListener('click', ()=>{ hidden=!hidden; document.body.classList.toggle('hide-circuit-mode',hidden); });
+document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()==='h') toggleBtn.click(); });
+
+
+// 初始化
+renderGateButtons();
+loadLevel(currentLevel);
+</script>
+</body>
+</html>
