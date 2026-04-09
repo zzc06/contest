@@ -722,56 +722,113 @@ function renderGateButtons(){
   const box = document.querySelector(".gate-btns");
   box.innerHTML = "";
 
-
   let gates = [];
 
-
   if (bitCount === 4) {
-      // 4 Bit
-      [0,1,2,3].forEach(i => {
-          gates.push({text:`X q${i}`, g:{type:"X", target:i}});
+      const bits = [0, 1, 2, 3];
+      
+      // 輔助函數：建立摺疊分類面板，避免 76 個按鈕塞爆畫面
+      const createCategory = (title, gateList) => {
+          const details = document.createElement("details");
+          if (title.includes("X Gate")) details.open = true; // 預設展開 X Gate
+          details.style.width = "100%";
+          details.style.marginBottom = "8px";
+          
+          const summary = document.createElement("summary");
+          summary.textContent = title;
+          summary.style.cursor = "pointer";
+          summary.style.fontWeight = "bold";
+          summary.style.padding = "6px";
+          summary.style.backgroundColor = "#eee";
+          summary.style.borderRadius = "6px";
+          summary.style.border = "1px solid #ccc";
+          details.appendChild(summary);
+          
+          const btnContainer = document.createElement("div");
+          btnContainer.style.display = "flex";
+          btnContainer.style.flexWrap = "wrap";
+          btnContainer.style.gap = "6px";
+          btnContainer.style.marginTop = "8px";
+          btnContainer.style.marginBottom = "8px";
+          
+          gateList.forEach(o => {
+              const b = document.createElement("button");
+              b.className = "gate-btn";
+              b.textContent = o.text;
+              // 為了塞進更多按鈕，稍微縮小字體跟 padding
+              b.style.fontSize = "11px"; 
+              b.style.padding = "4px 6px";
+              b.onclick = () => applyGateAndAnimate(o.g);
+              btnContainer.appendChild(b);
+          });
+          details.appendChild(btnContainer);
+          box.appendChild(details);
+      };
+
+      // --- 1. X Gates (4個) ---
+      let xGates = [];
+      bits.forEach(i => xGates.push({text:`X q${i}`, g:{type:"X", target:i}}));
+      createCategory(`X Gate (4個)`, xGates);
+
+      // --- 2. 1-Control Gates (24個) ---
+      let cnotGates = [];
+      bits.forEach(c => {
+          bits.forEach(t => {
+              if (c !== t) {
+                  cnotGates.push({text:`CNOT q${c}→q${t}`, g:{type:"CNOT", control:c, target:t}});
+                  cnotGates.push({text:`0CNOT q${c}→q${t}`, g:{type:"0CNOT", control:c, target:t}});
+              }
+          });
       });
-      gates.push({text:"CNOT q0→q1", g:{type:"CNOT", control:0, target:1}});
-      gates.push({text:"CNOT q3→q2", g:{type:"CNOT", control:3, target:2}});
+      createCategory(`1-Control CNOT (24個)`, cnotGates);
+
+      // --- 3. 2-Control Gates (48個) ---
+      let toffoliGates = [];
+      const pairs = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3]];
+      pairs.forEach(([c1, c2]) => {
+          bits.forEach(t => {
+              if (t !== c1 && t !== c2) {
+                  toffoliGates.push({text:`TOF(q${c1},q${c2}→q${t})`, g:{type:"CCNOT", control1:c1, c1Val:1, control2:c2, c2Val:1, target:t}});
+                  toffoliGates.push({text:`TOF(q${c1},q${c2}'→q${t})`, g:{type:"CCNOT", control1:c1, c1Val:1, control2:c2, c2Val:0, target:t}});
+                  toffoliGates.push({text:`TOF(q${c1}',q${c2}→q${t})`, g:{type:"CCNOT", control1:c1, c1Val:0, control2:c2, c2Val:1, target:t}});
+                  toffoliGates.push({text:`TOF(q${c1}',q${c2}'→q${t})`, g:{type:"CCNOT", control1:c1, c1Val:0, control2:c2, c2Val:0, target:t}});
+              }
+          });
+      });
+      createCategory(`2-Control Toffoli (48個)`, toffoliGates);
+      
+      // 4-bit 處理完畢，直接 return 避免執行到下方的舊邏輯
+      return; 
+
   } else if (bitCount === 3) {
-      // 完整的 3-bit 閘門設定
-     
       // 3個 單量子比特 X
       gates.push({text:"X q0", g:{type:"X",target:0}});
       gates.push({text:"X q1", g:{type:"X",target:1}});
       gates.push({text:"X q2", g:{type:"X",target:2}});
 
+      // 12 個 Toffoli Gates
+      gates.push({text:"TOF(q0,q1→q2)", g:{type:"CCNOT", control1:0, c1Val:1, control2:1, c2Val:1, target:2}});
+      gates.push({text:"TOF(q0',q1'→q2)", g:{type:"CCNOT", control1:0, c1Val:0, control2:1, c2Val:0, target:2}});
+      gates.push({text:"TOF(q0',q1→q2)", g:{type:"CCNOT", control1:0, c1Val:0, control2:1, c2Val:1, target:2}});
+      gates.push({text:"TOF(q0,q1'→q2)", g:{type:"CCNOT", control1:0, c1Val:1, control2:1, c2Val:0, target:2}});
 
-      // 12 個 Toffoli Gates (依目標位元分組)
-      // Target: q2 (Controls: q0, q1)
-      gates.push({text:"TOF(q0,q1,   q2)", g:{type:"CCNOT", control1:0, c1Val:1, control2:1, c2Val:1, target:2}});
-      gates.push({text:"TOF(q0',q1', q2)", g:{type:"CCNOT", control1:0, c1Val:0, control2:1, c2Val:0, target:2}});
-      gates.push({text:"TOF(q0',q1,  q2)", g:{type:"CCNOT", control1:0, c1Val:0, control2:1, c2Val:1, target:2}});
-      gates.push({text:"TOF(q0,q1',  q2)", g:{type:"CCNOT", control1:0, c1Val:1, control2:1, c2Val:0, target:2}});
+      gates.push({text:"TOF(q0,q2→q1)", g:{type:"CCNOT", control1:0, c1Val:1, control2:2, c2Val:1, target:1}});
+      gates.push({text:"TOF(q0',q2'→q1)", g:{type:"CCNOT", control1:0, c1Val:0, control2:2, c2Val:0, target:1}});
+      gates.push({text:"TOF(q0',q2→q1)", g:{type:"CCNOT", control1:0, c1Val:0, control2:2, c2Val:1, target:1}});
+      gates.push({text:"TOF(q0,q2'→q1)", g:{type:"CCNOT", control1:0, c1Val:1, control2:2, c2Val:0, target:1}});
 
+      gates.push({text:"TOF(q1,q2→q0)", g:{type:"CCNOT", control1:1, c1Val:1, control2:2, c2Val:1, target:0}});
+      gates.push({text:"TOF(q1',q2'→q0)", g:{type:"CCNOT", control1:1, c1Val:0, control2:2, c2Val:0, target:0}});
+      gates.push({text:"TOF(q1',q2→q0)", g:{type:"CCNOT", control1:1, c1Val:0, control2:2, c2Val:1, target:0}});
+      gates.push({text:"TOF(q1,q2'→q0)", g:{type:"CCNOT", control1:1, c1Val:1, control2:2, c2Val:0, target:0}});
 
-      // Target: q1 (Controls: q0, q2)
-      gates.push({text:"TOF(q0,q2,   q1)", g:{type:"CCNOT", control1:0, c1Val:1, control2:2, c2Val:1, target:1}});
-      gates.push({text:"TOF(q0',q2', q1)", g:{type:"CCNOT", control1:0, c1Val:0, control2:2, c2Val:0, target:1}});
-      gates.push({text:"TOF(q0',q2,  q1)", g:{type:"CCNOT", control1:0, c1Val:0, control2:2, c2Val:1, target:1}});
-      gates.push({text:"TOF(q0,q2',  q1)", g:{type:"CCNOT", control1:0, c1Val:1, control2:2, c2Val:0, target:1}});
-
-
-      // Target: q0 (Controls: q1, q2)
-      gates.push({text:"TOF(q1,q2,   q0)", g:{type:"CCNOT", control1:1, c1Val:1, control2:2, c2Val:1, target:0}});
-      gates.push({text:"TOF(q1',q2', q0)", g:{type:"CCNOT", control1:1, c1Val:0, control2:2, c2Val:0, target:0}});
-      gates.push({text:"TOF(q1',q2,  q0)", g:{type:"CCNOT", control1:1, c1Val:0, control2:2, c2Val:1, target:0}});
-      gates.push({text:"TOF(q1,q2',  q0)", g:{type:"CCNOT", control1:1, c1Val:1, control2:2, c2Val:0, target:0}});
-
-
-      // 6 個普通 CNOT (1-Control)
+      // 6 個普通 CNOT
       gates.push({text:"CNOT q0→q1", g:{type:"CNOT",control:0,target:1}});
       gates.push({text:"CNOT q1→q0", g:{type:"CNOT",control:1,target:0}});
       gates.push({text:"CNOT q0→q2", g:{type:"CNOT",control:0,target:2}});
       gates.push({text:"CNOT q2→q0", g:{type:"CNOT",control:2,target:0}});
       gates.push({text:"CNOT q1→q2", g:{type:"CNOT",control:1,target:2}});
       gates.push({text:"CNOT q2→q1", g:{type:"CNOT",control:2,target:1}});
-
 
       // 6 個 0-Control CNOT
       gates.push({text:"0CNOT q0→q1", g:{type:"0CNOT",control:0,target:1}});
@@ -781,9 +838,7 @@ function renderGateButtons(){
       gates.push({text:"0CNOT q1→q2", g:{type:"0CNOT",control:1,target:2}});
       gates.push({text:"0CNOT q2→q1", g:{type:"0CNOT",control:2,target:1}});
 
-
   } else if (bitCount === 2) {
-      // 2-bit 閘門
       gates.push({text:"X q0", g:{type:"X",target:0}});
       gates.push({text:"X q1", g:{type:"X",target:1}});
       gates.push({text:"1CNOT q0→q1", g:{type:"CNOT",control:0,target:1}});
@@ -791,11 +846,10 @@ function renderGateButtons(){
       gates.push({text:"1CNOT q1→q0", g:{type:"CNOT",control:1,target:0}});
       gates.push({text:"0CNOT q1→q0", g:{type:"0CNOT",control:1,target:0}});
   } else {
-      // 1-bit 閘門
       gates.push({text:"X q0", g:{type:"X",target:0}});
   }
 
-
+  // 1-3 bit 的閘門仍走舊的渲染邏輯
   gates.forEach(o=>{
     const b = document.createElement("button");
     b.className="gate-btn";
